@@ -1,0 +1,41 @@
+package actions;
+
+import javax.inject.*;
+
+import org.openxava.actions.*;
+import org.openxava.util.*;
+
+import ProgBien.*;
+
+
+public class InitDashboardAction extends ViewBaseAction {
+	
+	//@Inject @Named("profile")
+    private Inquadrato profile;
+	
+    @Override
+    public void execute() throws Exception {
+    	Dashboard d = (Dashboard)getView().getEntity();
+    	
+        // TODO future usage when we find what to do here
+    	getView().setValue("nome", Users.getCurrentUserInfo().getGivenName());
+    	getView().setValue("cognome", Users.getCurrentUserInfo().getFamilyName());
+    	getView().setValue("cf", Users.getCurrent());
+    	
+    	if (profile.getServizi() != null)
+    	{
+    		getView().setValue("inquadrato.servizi", profile.getServizi().getServizio());
+    	}
+    	//getView().refreshDescriptionsLists();
+    }
+
+	public Inquadrato getProfile() {
+		return profile;
+	}
+
+	public void setProfile(Inquadrato profile) {
+		this.profile = profile;
+	}
+    
+    
+}

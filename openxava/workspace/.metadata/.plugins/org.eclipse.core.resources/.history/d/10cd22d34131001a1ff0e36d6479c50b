@@ -1,0 +1,9 @@
+package actions;
+
+import org.openxava.actions.*;
+
+public class CaricaProceduraDaProgrammaApprovatoAction extends ViewBaseAction {
+	public void execute() throws Exception {		
+		            
+	}
+}

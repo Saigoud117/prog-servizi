@@ -1,0 +1,29 @@
+package actions;
+
+import javax.persistence.*;
+
+import org.openxava.actions.*;
+import org.openxava.jpa.*;
+
+import ProgBien.*;
+
+public class NuovaAbilitazioneAction extends ViewBaseAction {
+	public void execute() throws Exception {
+		Inquadrato i = (Inquadrato)getView().getEntity();
+		
+        Servizi s = (Servizi)getView().getValue("servizi");
+        Dipendenti d = (Dipendenti)getView().getValue("dipenenti");
+        
+        i.setServizi(s);
+        i.setDipendenti(d);
+        
+        XPersistence.getManager().persist(i);
+	
+		XPersistence.commit(); 
+		closeDialog();
+		getView().reset();
+		getView().setEditable(true);    
+		getView().setKeyEditable(false);
+        addMessage("Abilitazione.Success");
+	}
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy element &apos;TicketConfigurazioneNotifiche.java&apos; to &apos;ProgBien.TicketConfigurazioneNotifiche.java&apos;&#x0D;&#x0A;- Original project: &apos;ProgrammaBiennale2020&apos;&#x0D;&#x0A;- Destination element: &apos;ProgBien.TicketConfigurazioneNotifiche.java&apos;&#x0D;&#x0A;- Original element: &apos;ProgBien.TicketConfigurazioneNotifiche.java&apos;" description="Copy compilation unit" destination="/src&lt;ProgBien{TicketConfigurazioneNotifiche.java" element1="/src&lt;ProgBien{TicketConfigurazioneNotifiche.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1589193045846" units="1" version="1.0"/>
+</session>

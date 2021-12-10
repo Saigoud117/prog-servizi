@@ -1,0 +1,21 @@
+/*C7*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C9*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C10*/SET SCHEMA PUBLIC
+alter table Procedure add column progettiict_Id_servizio varchar(32) not null
+alter table Procedure add column progettiict_Sigla varchar(20) not null
+alter table Procedure add constraint FK_qc0lt18lkac65lh35y0cfxu4j foreign key (progettiict_Id_servizio, progettiict_Sigla) references ProgettiIct
+/*C11*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C13*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C15*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C14*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C12*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C8*/SET SCHEMA PUBLIC
+DISCONNECT
+/*C10*/DISCONNECT

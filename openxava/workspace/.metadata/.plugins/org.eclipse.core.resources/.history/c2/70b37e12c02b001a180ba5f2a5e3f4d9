@@ -1,0 +1,1362 @@
+package ProgBien;
+
+import java.math.*;
+import java.util.*;
+
+import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+
+import org.hibernate.annotations.*;
+import org.openxava.annotations.*;
+import org.openxava.jpa.*;
+
+import Calculators.*;
+import Filters.*;
+import ProgBien.Enumerators.*;
+
+@Entity
+@Views({
+@View(
+	members="cui; TipoOperazione [variante; linkProtocollo; nonriproposta; notenonriproposta]; servizi; anno0; data; cup; Ricompreso[ricompreso; cuiRicompreso; cuiRicompresoLavori]; lotto;"
+			+ "ambitogeografico; cupmaster; CPV [settore; divisione; codiceLivello1; cpv]; dl662014; pdc; descrizione;"
+			+ "Verdi [verdi; riferimentoNormativoVerdi; oggettoAcquistiVerdi, cpvAcquistiVerdi; importoNettoAcquistiVerdi, aliquotaIvaAcquistiVerdi; oggettoAcquistiMaterialiRiciclati, cpvAcquistiMaterialiRiciclati; importoNettoAcquistiMaterialiRiciclati, aliquotaIvaAcquistiMaterialiRiciclati;]; Priorita[priorita; prioritamotivation;]; dipendenti; quantita; umisura; durata; costipregressi; costia1; costia2; costias;"
+			+ "costiTot; taffidamento; ausa; QuadroEconomico[quadroeconomico; valoreStimatoAppalto, importoBaseAsta, sommeADisposizione, totaleImposte; costiComplessivi, costiA1, costiA2, costiAs; totaleIvaQuadroEconomico, totaleQuadroEconomico]; aggregabile; noteaggregabile;"
+			+ "avviata; progettiict; programenable; affidaenable; execenable; Coperture[coperture; totaleCoperture;]; "
+			+ "gdl113Program; gdl113Affida; gdl113Exec; quotaInnovazioneTotale; gdl113Totale; fondoArt113Totale; note;" // Shows only number and name in the same line
+),
+@View(name="Simple", // This view is used only when “Simple” is specified
+members="cui, anno0, descrizione" // Shows only number and name in the same line
+),
+@View(name="Custom", members="cui, anno0, descrizione; gdl113Program, gdl113Affida, gdl113Exec, gdl113Totale;")
+,
+@View(name="Cui", extendsView="Simple", members="cui")
+})
+@Tabs({
+@Tab(
+	//name="Current",
+	filter=CurrentUserServizioStrutturaFilter.class,
+	//properties="servizio, struttura, descrizione, codicesicurezza, datainizio, datafine, nstruttura, nservizio, inquadrato",
+	baseCondition="${servizi.servizio} like ? and ${servizi.struttura} like ?"
+)
+})
+@Immutable
+public class ProcedureDefinitive implements java.io.Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	@Required
+	@ManyToOne
+	@ReferenceView("Simple")
+	@JoinColumns({
+	 @JoinColumn(
+	           name = "Servizio",
+	           referencedColumnName = "servizio"),
+	 @JoinColumn(
+	           name = "Struttura",
+	         referencedColumnName = "struttura")
+	    })
+    private Servizi servizi; // A regular Java reference
+	
+	@Required
+	@ManyToOne
+	@ReferenceView("Simple")
+	@JoinColumns({
+	 @JoinColumn(
+	           name = "CF",
+	           referencedColumnName = "cf"),
+	 @JoinColumn(
+	           name = "Nome",
+	         referencedColumnName = "nome"),
+	 @JoinColumn(
+	           name = "Cognome",
+	         referencedColumnName = "cognome")
+	    })
+    private Dipendenti dipendenti; // A regular Java reference
+	
+	@Required
+    @Column(name = "Descrizione", length = 256, nullable = false)
+    private String descrizione;
+
+    @Required
+    @Column(name = "Anno0", nullable = false)
+    private Integer anno0;
+		
+    @Id
+    private String cui;
+
+	@Required
+	@Column(name = "Data", nullable = true)
+    private Date data;
+
+    @Column(name = "CUP", length = 15, nullable = true)
+    private String cup;
+    
+    @Required
+    @Column(name = "Ricompreso", length = 1, nullable = true)
+    @org.hibernate.annotations.Type(type="org.openxava.types.EnumLetterType",
+    	    parameters={
+        		@org.hibernate.annotations.Parameter(name="letters", value="NCWILS")
+        		,@org.hibernate.annotations.Parameter(name="enumType", value="ProgBien.Enumerators$Ricompreso")
+    	    }
+    	)
+    private Ricompreso ricompreso;   
+    
+    @ManyToOne( // The reference is persisted as a database relationship
+            fetch=FetchType.LAZY, // The reference is loaded on demand
+            optional=true) // The reference can have no value
+    @DescriptionsList(
+    		descriptionProperties="cui, descrizione",
+    		depends="ricompreso",
+    		condition="? = 'S'") // Thus the reference is displayed using a combo
+    private ProcedureProgramma cuiRicompreso; // A regular Java reference
+	
+	@Column(name = "CuiRicompresoLavori", length = 25, nullable = true)
+    private String cuiRicompresoLavori;	
+	
+	public void saveTotali() throws Exception {
+		BigDecimal tot = getGdl113Totale();
+	    BigDecimal affida = tot.multiply(BigDecimal.valueOf(0.3)).setScale(2, RoundingMode.UP);
+	    BigDecimal exec = tot.multiply(BigDecimal.valueOf(0.5)).setScale(2, RoundingMode.UP);
+	    BigDecimal program = tot.multiply(BigDecimal.valueOf(0.2)).setScale(2, RoundingMode.UP);
+	    BigDecimal innovazione = getQuotaInnovazioneTotale().setScale(2, RoundingMode.UP);
+	    BigDecimal fondo113 = getFondoArt113Totale().setScale(2, RoundingMode.UP);
+	    
+	    setCostitotali(getCostiTot());
+		setGdl113totale(tot);
+		setGdl113program(program);
+		setGdl113affida(affida);
+		setGdl113exec(exec);
+		setQuotaInnovazione(innovazione);
+		setFondoart113(fondo113);
+	}
+	
+	@ManyToOne( // The reference is persisted as a database relationship
+        fetch=FetchType.LAZY, // The reference is loaded on demand
+        optional=false) // The reference can have no value
+    @DescriptionsList(
+    		descriptionProperties="codice, descrizione"
+    		) // Thus the reference is displayed using a combo
+    private Nuts ambitogeografico;
+
+    //@Required
+    //@Column(name = "Settore", length = 1, nullable = false)
+    //private String settore;
+    //public enum Settore { F, S }
+    
+    @Required
+    @Column(name = "Settore", length = 1, nullable = false)
+    @org.hibernate.annotations.Type(type="org.openxava.types.EnumLetterType",
+    	    parameters={
+        		@org.hibernate.annotations.Parameter(name="letters", value="XFS")
+        		,@org.hibernate.annotations.Parameter(name="enumType", value="ProgBien.Enumerators$Settore")
+    	    }
+    	)
+    private Settore settore;
+
+    @ManyToOne( // The reference is persisted as a database relationship
+            fetch=FetchType.LAZY, // The reference is loaded on demand
+            optional=false) // The reference can have no value
+        @DescriptionsList(
+        		descriptionProperties="divisione, descrizione", 
+    			depends="settore",
+        		condition="e.fos = ? and e.codice like '%000000%'"
+        		) // Thus the reference is displayed using a combo
+        private Cpv divisione; // A regular Java reference   
+
+    @ManyToOne( // The reference is persisted as a database relationship
+            fetch=FetchType.LAZY, // The reference is loaded on demand
+            optional=false) // The reference can have no value
+        @DescriptionsList(
+        		descriptionProperties="codicelivello1, descrizione", 
+    			depends="divisione",
+        		condition="e.divisione = (select c.divisione from Cpv c where c.codice = ?) and e.codice like '%00000%' and e.codice not like '%000000%'"
+        		) // Thus the reference is displayed using a combo
+        private Cpv codiceLivello1; // A regular Java reference    
+
+	@ManyToOne( // The reference is persisted as a database relationship
+        fetch=FetchType.LAZY, // The reference is loaded on demand
+        optional=false) // The reference can have no value
+    @DescriptionsList(
+    		descriptionProperties="codice, descrizione", 
+			depends="codiceLivello1",
+    		condition="e.codice like (select c.divisione || c.codicelivello1 from Cpv c where c.codice = ?) || '%'"
+    		) // Thus the reference is displayed using a combo
+    private Cpv cpv; // A regular Java reference
+	
+    @ManyToOne( // The reference is persisted as a database relationship
+        fetch=FetchType.LAZY, // The reference is loaded on demand
+        optional=true) // The reference can have no value
+    @DefaultValueCalculator(value=DefaultCodiciIctCalculator.class)
+    @DescriptionsList(
+    		descriptionProperties="key, descrizione",
+    		condition="e.gruppicodici = 'B'") // Thus the reference is displayed using a combo
+    private CodiciIct dl662014; // A regular Java reference
+
+	//@Column(name = "PdC", length = 20, nullable = true)
+    //private String pdc;
+	
+	@ManyToOne( // The reference is persisted as a database relationship
+        fetch=FetchType.LAZY, // The reference is loaded on demand
+        optional=true) // The reference can have no value
+	@ReferenceView("Simple")
+    private Pdc pdc; // A regular Java reference
+
+    @Required
+    @Column(name = "Priorita", length = 1, nullable = false)
+    private Priorita priorita;
+    
+    @Column(name = "PrioritaMotivation", length = 1, nullable = true)
+    private PrioritaMotivation prioritamotivation;   	     
+
+    @Required
+    @Column(name = "Durata", nullable = false)
+    private int durata;
+    
+    @Required
+    @Column(name = "Taffidamento", length = 1, nullable = false)
+    @org.hibernate.annotations.Type(type="org.openxava.types.EnumLetterType",
+    	    parameters={
+        		@org.hibernate.annotations.Parameter(name="letters", value="NRD")
+        		,@org.hibernate.annotations.Parameter(name="enumType", value="ProgBien.Enumerators$Taffidamento")
+    	    }
+    	)
+    private Taffidamento taffidamento;  
+
+    /*
+    @ElementCollection
+    @ListProperties("descrizionevoce, tipologia, capitolo, pdc, importonetto, base, aliquotaiva, importoIvaCalculated, totaleCalculated")
+	private Collection<QuadroEconomicoEmbeddable> quadroeconomico;
+    */
+    
+    @OneToMany (mappedBy="procedura", cascade=CascadeType.REMOVE)
+    @AddAction("ProcedureProgramma.addQuadroeconomico") // @AddAction instead
+    private Collection<QuadroEconomicoDefinitivo> quadroeconomico;       
+
+    @Stereotype("MONEY")
+    @Column(name = "ValoreStimatoAppalto", length = 16, precision = 12, nullable = true)
+    @Hidden
+    private BigDecimal valorestimatoappalto;
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getValoreStimatoAppalto() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("A") || q.getTipologia().getKey().toString().equals("B"))
+    		{
+    			sum = sum.add(q.getImportonetto());
+    		}    		
+		}    	
+        return sum;
+    }   
+    
+	@Stereotype("MONEY")
+    @Column(name = "ImportoBaseAsta", length = 16, precision = 12, nullable = true)
+    @Hidden
+    private BigDecimal importobaseasta;
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getImportoBaseAsta() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("A"))
+    		{
+    			sum = sum.add(q.getImportonetto());
+    		}    		
+		}    	
+        return sum;
+    }
+	
+	@Stereotype("MONEY")
+    @Column(name = "SommeADisposizione", length = 16, precision = 12, nullable = true)
+    @Hidden
+    private BigDecimal sommeadisposizione;
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getSommeADisposizione() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("C"))
+    		{
+    			sum = sum.add(q.getImportonetto());
+    		}    		
+		}    	
+        return sum;
+    } 
+	
+	@Stereotype("MONEY")
+    @Column(name = "TotaleImposte", length = 16, precision = 12, nullable = true)
+    @Hidden
+    private BigDecimal totaleimposte;
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getTotaleImposte() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("D"))
+    		{
+    			sum = sum.add(q.getImportonetto());
+    		}    	
+    		sum = sum.add(q.getImportoiva());
+		}    	
+        return sum;
+    }
+	
+	@Stereotype("MONEY")
+    @Column(name = "CostiComplessivi", length = 16, precision = 12, nullable = true)
+    @Hidden
+    private BigDecimal costicomplessivi;
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico, costipregressi")
+	@javax.persistence.Transient
+    public BigDecimal getCostiComplessivi() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("A") || q.getTipologia().getKey().toString().equals("C") || q.getTipologia().getKey().toString().equals("D"))
+    		{
+    			sum = sum.add(q.getImportonetto());
+    		}    		
+		}    
+    	if (costipregressi != null)
+    	{
+    		return sum.add(costipregressi);
+    	}
+    	else
+    		return sum;
+    }
+	
+	@Stereotype("MONEY")
+	@Column(name = "CostiA1", length = 16, precision = 12, nullable = true)
+	@Hidden
+	private BigDecimal costia1;
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getCostiA1() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("A") || q.getTipologia().getKey().toString().equals("C") || q.getTipologia().getKey().toString().equals("D"))
+    		{
+    			sum = sum.add(q.getImportonetto().multiply(q.getPercentualeA1().divide(new BigDecimal(100))));
+    		}    		
+		}
+		return sum;
+    }
+
+    @Stereotype("MONEY")
+    @Column(name = "CostiA2", length = 16, precision = 12, nullable = true)
+    @Hidden
+    private BigDecimal costia2;
+    
+    @Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getCostiA2() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("A") || q.getTipologia().getKey().toString().equals("C") || q.getTipologia().getKey().toString().equals("D"))
+    		{
+    			sum = sum.add(q.getImportonetto().multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+    		}    		
+		}
+		return sum;
+    }
+
+    @Stereotype("MONEY")
+    @Column(name = "CostiAs", length = 16, precision = 12, nullable = true)
+    @Hidden
+    private BigDecimal costias;
+    
+    @Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getCostiAs() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	BigDecimal percentage = BigDecimal.ZERO;
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getTipologia().getKey().toString().equals("A") || q.getTipologia().getKey().toString().equals("C") || q.getTipologia().getKey().toString().equals("D"))
+    		{
+    			percentage = q.getPercentualeA1().add(q.getPercentualeA2()).add(q.getPercentualeA3());
+    			if (percentage.compareTo(new BigDecimal(100)) == -1)
+    				sum = sum.add(q.getImportonetto().multiply((new BigDecimal(100).subtract(percentage)).divide(new BigDecimal(100))));
+    			sum = sum.add(q.getImportonetto().multiply(q.getPercentualeA3().divide(new BigDecimal(100))));
+    		}    		
+		}
+		return sum;
+    }
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getTotaleIvaQuadroEconomico() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getImportoiva() != null)
+			{
+				sum = sum.add(q.getImportoiva());
+			}
+		}    	
+        return sum;
+    }
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico")
+	@javax.persistence.Transient
+    public BigDecimal getTotaleQuadroEconomico() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+    		if (q.getImportoiva() != null)
+			{			
+    			sum = sum.add(q.getImportoiva()).add(q.getImportonetto());
+			}
+    	}
+        return sum;
+    }
+
+	@Stereotype("MONEY")
+    @Column(name = "CostiPregressi", length = 16, precision = 12, nullable = true)
+    private BigDecimal costipregressi;
+    
+    @Hidden
+    @Stereotype("MONEY")
+    @Column(name = "CostiTotali", length = 16, precision = 12, nullable = true)
+    private BigDecimal costitotali;
+
+	@Stereotype("MONEY")
+    @Depends("costipregressi, costia1, costia2, costias")
+    public BigDecimal getCostiTot() {
+        return (costipregressi==null?BigDecimal.ZERO:costipregressi).add(costia1==null?BigDecimal.ZERO:costia1).add(costia2==null?BigDecimal.ZERO:costia2).add(costias==null?BigDecimal.ZERO:costias);
+    }
+    
+    @ManyToOne( // The reference is persisted as a database relationship
+            fetch=FetchType.LAZY, // The reference is loaded on demand
+            optional=false) // The reference can have no value
+        @DescriptionsList(descriptionProperties="codicefiscale, denominazione") // Thus the reference is displayed using a combo
+        private Ausa ausa; // A regular Java reference
+    
+    @Column(name = "Variante", nullable = true)
+    private VarianteValori variante;  
+    
+    @Required
+    @Column(name = "Avviata", nullable = false)
+    private boolean avviata;
+    
+    @Required
+    @Column(name = "Aggregabile", nullable = false)
+    private boolean aggregabile;
+    
+    @Stereotype("TEXT_AREA") // This is for a big text, a text area or equivalent will be used
+    @Column(name = "NoteAggregabile", length = 500, nullable = true)
+    private String noteaggregabile;
+
+    @Required
+	@Column(name = "NonRiproposta", nullable = true)
+    private boolean nonriproposta;  
+	
+	@Stereotype("TEXT_AREA") // This is for a big text, a text area or equivalent will be used
+    @Column(name = "NoteNonRiproposta", length = 500, nullable = true)
+    private String notenonriproposta;
+    
+    @ManyToOne( // The reference is persisted as a database relationship
+        fetch=FetchType.EAGER, // The reference is loaded on demand
+        optional=true) // The reference can have no value
+    @JoinColumns({                                                                                 // 2
+      @JoinColumn(name="progettiict_id_servizio",referencedColumnName="id_servizio"),
+      @JoinColumn(name="progettiict_sigla",referencedColumnName="sigla")
+    })
+    @DescriptionsList(descriptionProperties="sigla") // Thus the reference is displayed using a combo
+    private ProgettiIct progettiict; // A regular Java reference
+
+	@Column(name = "Quantita", nullable = true)
+    private Integer quantita;
+
+    @ManyToOne( // The reference is persisted as a database relationship
+        fetch=FetchType.LAZY, // The reference is loaded on demand
+        optional=true) // The reference can have no value
+    @DescriptionsList(
+    		descriptionProperties="descrizione"
+    		) // Thus the reference is displayed using a combo
+    private UnitaMisura umisura;
+
+    @Required
+    @Column(name = "Lotto", nullable = false)
+    private boolean lotto;
+
+    @Column(name = "CupMaster", length = 15, nullable = true)
+    private String cupmaster;
+
+	@Column(name = "Verdi", nullable = true)
+    private boolean verdi;
+	
+	@Column(name = "RiferimentoNormativoVerdi", nullable = true)
+    private String riferimentoNormativoVerdi;
+	
+	@Column(name = "OggettoAcquistiVerdi", nullable = true)
+    private String oggettoAcquistiVerdi;
+	
+	@Column(name = "CpvAcquistiVerdi", nullable = true)
+    private String cpvAcquistiVerdi;
+	
+	@Stereotype("MONEY")
+    @Column(name = "ImportoNettoAcquistiVerdi", length = 16, precision = 12)
+    private BigDecimal importoNettoAcquistiVerdi;
+	
+	@Column(name = "AliquotaIvaAcquistiVerdi", length = 5, precision = 2, nullable = true)
+    private BigDecimal aliquotaIvaAcquistiVerdi;
+	
+	@Column(name = "OggettoAcquistiMaterialiRiciclati", nullable = true)
+    private String oggettoAcquistiMaterialiRiciclati;
+	
+	@Column(name = "CpvAcquistiMaterialiRiciclati", nullable = true)
+    private String cpvAcquistiMaterialiRiciclati;
+	
+	@Stereotype("MONEY")
+    @Column(name = "ImportoNettoAcquistiMaterialiRiciclati", length = 16, precision = 12)
+    private BigDecimal importoNettoAcquistiMaterialiRiciclati;
+	
+	@Column(name = "AliquotaIvaAcquistiMaterialiRiciclati", length = 5, precision = 2, nullable = true)
+    private BigDecimal aliquotaIvaAcquistiMaterialiRiciclati;
+	
+	@Column(name = "ProgramEnable", nullable = true)
+    private boolean programenable;	
+	
+	@Column(name = "AffidaEnable", nullable = true)
+    private boolean affidaenable;
+	
+	@Column(name = "ExecEnable", nullable = true)
+    private boolean execenable;
+	
+	@Stereotype("MONEY")
+    @Column(name = "GdL113Program", length = 16, precision = 12, nullable = true)
+	@Hidden
+    private BigDecimal gdl113program;
+
+	@Stereotype("MONEY")
+    @Column(name = "GdL113Affida", length = 16, precision = 12, nullable = true)
+	@Hidden
+    private BigDecimal gdl113affida;
+
+	@Stereotype("MONEY")
+    @Column(name = "GdL113Exec", length = 16, precision = 12, nullable = true)
+	@Hidden
+    private BigDecimal gdl113exec;
+    
+	@Stereotype("MONEY")
+    @Column(name="GdL113Totale", length=16, nullable = true) 
+    @Hidden
+    private BigDecimal gdl113totale; //Amount of pieces (calculated on the amount of pieces of the selected package)	
+	
+	@Stereotype("MONEY")
+    @Column(name="QuotaInnovazione", length=16, nullable = true) 
+    @Hidden
+    private BigDecimal quotaInnovazione; //Amount of pieces (calculated on the amount of pieces of the selected package)
+	
+	@Stereotype("MONEY")
+    @Column(name="FondoArt113", length=16, nullable = true) 
+    @Hidden
+    private BigDecimal fondoart113; //Amount of pieces (calculated on the amount of pieces of the selected package)
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico, programenable")
+    @javax.persistence.Transient
+    public BigDecimal getGdl113Program() {
+		if (quadroeconomico != null && programenable == true)
+		{
+			return getGdl113Totale().multiply(BigDecimal.valueOf(0.2));
+		}
+		else return BigDecimal.valueOf(0);
+	}
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico, affidaenable")
+    @javax.persistence.Transient
+    public BigDecimal getGdl113Affida() {
+		if (quadroeconomico != null && affidaenable == true)
+		{
+			return getGdl113Totale().multiply(BigDecimal.valueOf(0.3));
+		}
+		else return BigDecimal.valueOf(0);
+	}
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico, execenable")
+    @javax.persistence.Transient
+    public BigDecimal getGdl113Exec() {
+		if (quadroeconomico != null && execenable == true)
+		{
+			return getGdl113Totale().multiply(BigDecimal.valueOf(0.5));
+		}
+		else return BigDecimal.valueOf(0);
+	}
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico, data")
+    @javax.persistence.Transient
+    public BigDecimal getQuotaInnovazioneTotale() {
+		
+		BigDecimal sum = BigDecimal.ZERO;   
+		if (quadroeconomico != null && !quadroeconomico.isEmpty())
+		{
+			for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+	    		if (q.getTipologia().getKey().toString().equals("A"))
+	    		{
+	    			sum = sum.add(q.getImportonetto());
+	    		}    		
+			}    
+		}
+		
+		if (data == null)
+    		data = new Date();
+    	
+    	EntityManager em = XPersistence.createManager();
+    	SogliaImporti valoreSoglia = (SogliaImporti) em.createQuery(
+		        "select s from SogliaImporti s where s.datainizio <= :data and s.datafine >= :data")  // JPQL query (1)
+		    .setParameter("data", data)
+		    .getSingleResult();  // To obtain one single entity (2)
+    	em.close(); // You have to close the manager
+    	    	
+    	BigDecimal bg1, bg2, bg3, bg4;
+        
+    	bg1 = new BigDecimal("1000000");
+    	bg2 = new BigDecimal("500000");
+    	if (valoreSoglia == null)
+    		bg3 = new BigDecimal("0");
+    	else
+    		bg3 = valoreSoglia.getValore();
+    	bg4 = new BigDecimal("100000"); 	
+    	
+    	BigDecimal tot;
+    	
+    	if (sum == null)
+    		tot = BigDecimal.valueOf(0);
+    	else if (sum.compareTo(bg1) == 1)
+    		tot = sum.multiply(BigDecimal.valueOf(0.015));
+    	else if (sum.compareTo(bg2) == 1)
+    		tot = sum.multiply(BigDecimal.valueOf(0.016));
+    	else if (sum.compareTo(bg3) == 1)
+    		tot = sum.multiply(BigDecimal.valueOf(0.018));
+    	else if (sum.compareTo(bg4) == 1)
+    		tot = sum.multiply(BigDecimal.valueOf(0.019));
+    	else 
+    		tot = sum.multiply(BigDecimal.valueOf(0.02));			
+		
+		if (sum != null) {
+			
+			BigDecimal gdlTot = getGdl113Totale();
+			
+			BigDecimal gdl1 = gdlTot.multiply(BigDecimal.valueOf(0.5));
+			BigDecimal gdl2 = gdlTot.multiply(BigDecimal.valueOf(0.3));
+			BigDecimal gdl3 = gdlTot.multiply(BigDecimal.valueOf(0.2));
+			
+			BigDecimal sumGdl = gdl1.add(gdl2).add(gdl3);
+			
+			return tot.add(sumGdl.negate());
+		}
+		else 
+			return BigDecimal.valueOf(0);
+	}
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico, data")
+    @javax.persistence.Transient
+    public BigDecimal getGdl113Totale() {
+				
+		BigDecimal sum = BigDecimal.ZERO;   
+		if (quadroeconomico != null && !quadroeconomico.isEmpty())
+		{
+			for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+	    		if (q.getTipologia().getKey().toString().equals("A"))
+	    		{
+	    			sum = sum.add(q.getImportonetto());
+	    		}    		
+			}  
+		}
+    	
+    	if (data == null)
+    		data = new Date();
+    	
+    	EntityManager em = XPersistence.createManager();
+    	SogliaImporti valoreSoglia = (SogliaImporti) em.createQuery(
+		        "select s from SogliaImporti s where s.datainizio <= :data and s.datafine >= :data")  // JPQL query (1)
+		    .setParameter("data", data)
+		    .getSingleResult();  // To obtain one single entity (2)
+    	em.close(); // You have to close the manager
+    	    	
+    	BigDecimal bg1, bg2, bg3, bg4;
+        
+    	bg1 = new BigDecimal("1000000");
+    	bg2 = new BigDecimal("500000");
+    	if (valoreSoglia == null)
+    		bg3 = new BigDecimal("0");
+    	else
+    		bg3 = valoreSoglia.getValore();
+    	bg4 = new BigDecimal("100000"); 	
+    	
+    	if (sum == null)
+    		return BigDecimal.valueOf(0);
+    	else if (sum.compareTo(bg1) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.015).multiply(BigDecimal.valueOf(0.8)));
+    	else if (sum.compareTo(bg2) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.016).multiply(BigDecimal.valueOf(0.8)));
+    	else if (sum.compareTo(bg3) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.018).multiply(BigDecimal.valueOf(0.8)));
+    	else if (sum.compareTo(bg4) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.019).multiply(BigDecimal.valueOf(0.8)));
+    	else 
+    		return sum.multiply(BigDecimal.valueOf(0.02).multiply(BigDecimal.valueOf(0.8)));
+    }
+	
+	@Stereotype("MONEY")
+    @Depends("quadroeconomico, data")
+    @javax.persistence.Transient
+    public BigDecimal getFondoArt113Totale() {
+				
+		BigDecimal sum = BigDecimal.ZERO;   
+		if (quadroeconomico != null && !quadroeconomico.isEmpty())
+		{
+			for (QuadroEconomicoDefinitivo q: quadroeconomico) {
+	    		if (q.getTipologia().getKey().toString().equals("A"))
+	    		{
+	    			sum = sum.add(q.getImportonetto());
+	    		}    		
+			}  
+		}
+    	
+    	if (data == null)
+    		data = new Date();
+    	
+    	EntityManager em = XPersistence.createManager();
+    	SogliaImporti valoreSoglia = (SogliaImporti) em.createQuery(
+		        "select s from SogliaImporti s where s.datainizio <= :data and s.datafine >= :data")  // JPQL query (1)
+		    .setParameter("data", data)
+		    .getSingleResult();  // To obtain one single entity (2)
+    	em.close(); // You have to close the manager
+    	    	
+    	BigDecimal bg1, bg2, bg3, bg4;
+        
+    	bg1 = new BigDecimal("1000000");
+    	bg2 = new BigDecimal("500000");
+    	if (valoreSoglia == null)
+    		bg3 = new BigDecimal("0");
+    	else
+    		bg3 = valoreSoglia.getValore();
+    	bg4 = new BigDecimal("100000"); 	
+    	
+    	if (sum == null)
+    		return BigDecimal.valueOf(0);
+    	else if (sum.compareTo(bg1) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.015));
+    	else if (sum.compareTo(bg2) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.016));
+    	else if (sum.compareTo(bg3) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.018));
+    	else if (sum.compareTo(bg4) == 1)
+    		return sum.multiply(BigDecimal.valueOf(0.019));
+    	else 
+    		return sum.multiply(BigDecimal.valueOf(0.02));
+    }
+	
+	/*
+	@ElementCollection
+	private Collection<CopertureEmbeddable> coperture;
+	*/
+	
+	@OneToMany (mappedBy="procedura", cascade=CascadeType.REMOVE)
+    @AddAction("ProcedureDefinitive.addCopertureDefinitive") // @AddAction instead
+    private Collection<CopertureDefinitive> coperture;
+	
+	@Stereotype("MONEY")
+    @Depends("coperture")
+	@javax.persistence.Transient
+    public BigDecimal getTotaleCoperture() {
+    			
+    	BigDecimal sum = BigDecimal.ZERO;   	
+    	for (CopertureDefinitive c: coperture) {
+    		if (c.getTotale() != null)
+			{
+				sum = sum.add(c.getTotale());
+			}
+		}    	
+        return sum;
+    }
+	
+	@Stereotype("TEXT_AREA") // This is for a big text, a text area or equivalent will be used
+    @Column(name = "Note", length = 500, nullable = true)
+    private String note;
+    
+    @Stereotype("WEBURL") // The user can view and change a photo
+	private String linkProtocollo;	    
+
+	public String getLinkProtocollo() {
+		return linkProtocollo;
+	}
+
+	public void setLinkProtocollo(String linkProtocollo) {
+		this.linkProtocollo = linkProtocollo;
+	}
+
+	public void setAnno0(Integer aValue) {
+        anno0 = aValue;
+    }
+
+    public Integer getAnno0() {
+        return anno0;
+    }    
+    
+    public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+	public Servizi getServizi() {
+		return servizi;
+	}
+
+	public void setServizi(Servizi servizi) {
+		this.servizi = servizi;
+	}
+
+    public void setData(Date aValue) {
+        data = aValue;
+    }
+
+    public Date getData() {
+        return data;
+    }
+
+    public void setCup(String aValue) {
+        cup = aValue;
+    }
+
+    public String getCup() {
+        return cup;
+    }       
+	
+    public String getCui() {
+		return cui;
+	}
+
+	public void setCui(String cui) {
+		this.cui = cui;
+	}	
+
+	public Ricompreso getRicompreso() {
+		return ricompreso;
+	}
+
+	public void setRicompreso(Ricompreso ricompreso) {
+		this.ricompreso = ricompreso;
+	}
+	
+	public ProcedureProgramma getCuiRicompreso() {
+		return cuiRicompreso;
+	}
+
+	public void setCuiRicompreso(ProcedureProgramma cuiRicompreso) {
+		this.cuiRicompreso = cuiRicompreso;
+	}
+
+	public String getCuiRicompresoLavori() {
+		return cuiRicompresoLavori;
+	}
+
+	public void setCuiRicompresoLavori(String cuiRicompresoLavori) {
+		this.cuiRicompresoLavori = cuiRicompresoLavori;
+	}
+
+	public void setAmbitogeografico(Nuts aValue) {
+        ambitogeografico = aValue;
+    }
+
+    public Nuts getAmbitogeografico() {
+        return ambitogeografico;
+    }
+
+    public void setSettore(Settore aValue) {
+        settore = aValue;
+    }
+
+    public Settore getSettore() {
+        return settore;
+    }
+    
+	public Cpv getDivisione() {
+		return divisione;
+	}
+
+	public void setDivisione(Cpv divisione) {
+		this.divisione = divisione;
+	}
+	
+	public Cpv getCodiceLivello1() {
+		return codiceLivello1;
+	}
+
+	public void setCodiceLivello1(Cpv codiceLivello1) {
+		this.codiceLivello1 = codiceLivello1;
+	}
+    
+    public Cpv getCpv() {
+		return cpv;
+	}
+
+	public void setCpv(Cpv cpv) {
+		this.cpv = cpv;
+	}
+	
+	public CodiciIct getDl662014() {
+		return dl662014;
+	}
+
+	public void setDl662014(CodiciIct dl662014) {
+		this.dl662014 = dl662014;
+	}
+
+    public void setPdc(Pdc aValue) {
+        pdc = aValue;
+    }
+
+    public Pdc getPdc() {
+        return pdc;
+    }
+
+    public void setDescrizione(String aValue) {
+        descrizione = aValue;
+    }
+
+    public String getDescrizione() {
+        return descrizione;
+    }    
+    
+    public Priorita getPriorita() {
+		return priorita;
+	}
+
+	public void setPriorita(Priorita priorita) {
+		this.priorita = priorita;
+	}
+
+	public PrioritaMotivation getPrioritamotivation() {
+		return prioritamotivation;
+	}
+
+	public void setPrioritamotivation(PrioritaMotivation prioritamotivation) {
+		this.prioritamotivation = prioritamotivation;
+	}
+
+    public Dipendenti getDipendenti() {
+		return dipendenti;
+	}
+
+	public void setDipendenti(Dipendenti dipendenti) {
+		this.dipendenti = dipendenti;
+	}
+
+    public void setDurata(int aValue) {
+        durata = aValue;
+    }
+
+    public int getDurata() {
+        return durata;
+    }
+
+    public void setTaffidamento(Taffidamento aValue) {
+        taffidamento = aValue;
+    }
+
+    public Taffidamento getTaffidamento() {
+        return taffidamento;
+    }    
+    
+    public Collection<QuadroEconomicoDefinitivo> getQuadroeconomico() {
+		return quadroeconomico;
+	}
+
+	public void setQuadroeconomico(Collection<QuadroEconomicoDefinitivo> quadroeconomico) {
+		this.quadroeconomico = quadroeconomico;
+	}
+    
+	/*
+    public Collection<QuadroEconomicoEmbeddable> getQuadroeconomico() {
+		return quadroeconomico;
+	}
+
+	public void setQuadroeconomico(Collection<QuadroEconomicoEmbeddable> quadroeconomico) {
+		this.quadroeconomico = quadroeconomico;
+	}*/
+	
+    public BigDecimal getImportobaseasta() {
+		return importobaseasta;
+	}
+
+	public void setImportobaseasta(BigDecimal importobaseasta) {
+		this.importobaseasta = importobaseasta;
+	}
+
+    public BigDecimal getCostipregressi() {
+		return costipregressi;
+	}
+
+	public void setCostipregressi(BigDecimal costipregressi) {
+		this.costipregressi = costipregressi;
+	}
+
+	public void setCostia1(java.math.BigDecimal aValue) {
+        costia1 = aValue;
+    }
+
+    public java.math.BigDecimal getCostia1() {
+        return costia1;
+    }
+
+    public void setCostia2(java.math.BigDecimal aValue) {
+        costia2 = aValue;
+    }
+
+    public java.math.BigDecimal getCostia2() {
+        return costia2;
+    }
+
+    public void setCostias(java.math.BigDecimal aValue) {
+        costias = aValue;
+    }
+
+    public java.math.BigDecimal getCostias() {
+        return costias;
+    }
+    
+    public BigDecimal getCostitotali() {
+		return costitotali;
+	}
+
+	public void setCostitotali(BigDecimal costitotali) {
+		this.costitotali = costitotali;
+	}
+
+    public Ausa getAusa() {
+		return ausa;
+	}
+
+	public void setAusa(Ausa ausa) {
+		this.ausa = ausa;
+	}	
+
+    public VarianteValori getVariante() {
+		return variante;
+	}
+
+	public void setVariante(VarianteValori variante) {
+		this.variante = variante;
+	}
+
+	public void setAvviata(boolean aValue) {
+        avviata = aValue;
+    }
+
+    public boolean getAvviata() {
+        return avviata;
+    }
+    
+    public boolean isAggregabile() {
+		return aggregabile;
+	}
+
+	public void setAggregabile(boolean aggregabile) {
+		this.aggregabile = aggregabile;
+	}
+	
+	public String getNoteaggregabile() {
+		return noteaggregabile;
+	}
+
+	public void setNoteaggregabile(String noteaggregabile) {
+		this.noteaggregabile = noteaggregabile;
+	}	
+    
+    public boolean isNonriproposta() {
+		return nonriproposta;
+	}
+
+	public void setNonriproposta(boolean nonriproposta) {
+		this.nonriproposta = nonriproposta;
+	}
+
+	public String getNotenonriproposta() {
+		return notenonriproposta;
+	}
+
+	public void setNotenonriproposta(String notenonriproposta) {
+		this.notenonriproposta = notenonriproposta;
+	}
+
+	public ProgettiIct getProgettiict() {
+		return progettiict;
+	}
+
+	public void setProgettiict(ProgettiIct progettiict) {
+		this.progettiict = progettiict;
+	}
+
+    public void setQuantita(Integer aValue) {
+        quantita = aValue;
+    }
+
+    public Integer getQuantita() {
+        return quantita;
+    }
+    
+    public UnitaMisura getUmisura() {
+		return umisura;
+	}
+
+	public void setUmisura(UnitaMisura umisura) {
+		this.umisura = umisura;
+	}
+
+	public void setLotto(boolean aValue) {
+        lotto = aValue;
+    }
+
+    public boolean getLotto() {
+        return lotto;
+    }
+
+    public String getCupmaster() {
+		return cupmaster;
+	}
+
+	public void setCupmaster(String cupmaster) {
+		this.cupmaster = cupmaster;
+	}
+
+    public void setVerdi(boolean aValue) {
+        verdi = aValue;
+    }
+
+    public boolean getVerdi() {
+        return verdi;
+    }
+    
+	public BigDecimal getValorestimatoappalto() {
+		return valorestimatoappalto;
+	}
+
+	public void setValorestimatoappalto(BigDecimal valorestimatoappalto) {
+		this.valorestimatoappalto = valorestimatoappalto;
+	}
+
+	public BigDecimal getSommeadisposizione() {
+		return sommeadisposizione;
+	}
+
+	public void setSommeadisposizione(BigDecimal sommeadisposizione) {
+		this.sommeadisposizione = sommeadisposizione;
+	}
+
+	public BigDecimal getTotaleimposte() {
+		return totaleimposte;
+	}
+
+	public void setTotaleimposte(BigDecimal totaleimposte) {
+		this.totaleimposte = totaleimposte;
+	}
+
+	public BigDecimal getCosticomplessivi() {
+		return costicomplessivi;
+	}
+
+	public void setCosticomplessivi(BigDecimal costicomplessivi) {
+		this.costicomplessivi = costicomplessivi;
+	}
+
+	public String getRiferimentoNormativoVerdi() {
+		return riferimentoNormativoVerdi;
+	}
+
+	public void setRiferimentoNormativoVerdi(String riferimentoNormativoVerdi) {
+		this.riferimentoNormativoVerdi = riferimentoNormativoVerdi;
+	}
+
+	public String getOggettoAcquistiVerdi() {
+		return oggettoAcquistiVerdi;
+	}
+
+	public void setOggettoAcquistiVerdi(String oggettoAcquistiVerdi) {
+		this.oggettoAcquistiVerdi = oggettoAcquistiVerdi;
+	}
+
+	public String getCpvAcquistiVerdi() {
+		return cpvAcquistiVerdi;
+	}
+
+	public void setCpvAcquistiVerdi(String cpvAcquistiVerdi) {
+		this.cpvAcquistiVerdi = cpvAcquistiVerdi;
+	}
+
+	public BigDecimal getImportoNettoAcquistiVerdi() {
+		return importoNettoAcquistiVerdi;
+	}
+
+	public void setImportoNettoAcquistiVerdi(BigDecimal importoNettoAcquistiVerdi) {
+		this.importoNettoAcquistiVerdi = importoNettoAcquistiVerdi;
+	}
+
+	public BigDecimal getAliquotaIvaAcquistiVerdi() {
+		return aliquotaIvaAcquistiVerdi;
+	}
+
+	public void setAliquotaIvaAcquistiVerdi(BigDecimal aliquotaIvaAcquistiVerdi) {
+		this.aliquotaIvaAcquistiVerdi = aliquotaIvaAcquistiVerdi;
+	}
+
+	public String getOggettoAcquistiMaterialiRiciclati() {
+		return oggettoAcquistiMaterialiRiciclati;
+	}
+
+	public void setOggettoAcquistiMaterialiRiciclati(String oggettoAcquistiMaterialiRiciclati) {
+		this.oggettoAcquistiMaterialiRiciclati = oggettoAcquistiMaterialiRiciclati;
+	}
+
+	public String getCpvAcquistiMaterialiRiciclati() {
+		return cpvAcquistiMaterialiRiciclati;
+	}
+
+	public void setCpvAcquistiMaterialiRiciclati(String cpvAcquistiMaterialiRiciclati) {
+		this.cpvAcquistiMaterialiRiciclati = cpvAcquistiMaterialiRiciclati;
+	}
+
+	public BigDecimal getImportoNettoAcquistiMaterialiRiciclati() {
+		return importoNettoAcquistiMaterialiRiciclati;
+	}
+
+	public void setImportoNettoAcquistiMaterialiRiciclati(BigDecimal importoNettoAcquistiMaterialiRiciclati) {
+		this.importoNettoAcquistiMaterialiRiciclati = importoNettoAcquistiMaterialiRiciclati;
+	}
+
+	public BigDecimal getAliquotaIvaAcquistiMaterialiRiciclati() {
+		return aliquotaIvaAcquistiMaterialiRiciclati;
+	}
+
+	public void setAliquotaIvaAcquistiMaterialiRiciclati(BigDecimal aliquotaIvaAcquistiMaterialiRiciclati) {
+		this.aliquotaIvaAcquistiMaterialiRiciclati = aliquotaIvaAcquistiMaterialiRiciclati;
+	}
+
+	public boolean isAffidaenable() {
+		return affidaenable;
+	}
+
+	public void setAffidaenable(boolean affidaenable) {
+		this.affidaenable = affidaenable;
+	}
+
+	public boolean isExecenable() {
+		return execenable;
+	}
+
+	public void setExecenable(boolean execenable) {
+		this.execenable = execenable;
+	}
+
+	public boolean isProgramenable() {
+		return programenable;
+	}
+
+	public void setProgramenable(boolean programenable) {
+		this.programenable = programenable;
+	}		
+	
+    public BigDecimal getGdl113program() {
+		return gdl113program;
+	}
+
+	public void setGdl113program(BigDecimal gdl113program) {
+		this.gdl113program = gdl113program;
+	}
+
+	public BigDecimal getGdl113affida() {
+		return gdl113affida;
+	}
+
+	public void setGdl113affida(BigDecimal gdl113affida) {
+		this.gdl113affida = gdl113affida;
+	}
+
+	public BigDecimal getGdl113exec() {
+		return gdl113exec;
+	}
+
+	public void setGdl113exec(BigDecimal gdl113exec) {
+		this.gdl113exec = gdl113exec;
+	}
+
+	public BigDecimal getGdl113totale() {
+		return gdl113totale;
+	}
+
+	public void setGdl113totale(BigDecimal gdl113totale) {
+		this.gdl113totale = gdl113totale;
+	}	
+
+	/*
+	public Collection<CopertureEmbeddable> getCoperture() {
+		return coperture;
+	}
+
+	public void setCoperture(Collection<CopertureEmbeddable> coperture) {
+		this.coperture = coperture;
+	}
+	*/
+
+	public BigDecimal getQuotaInnovazione() {
+		return quotaInnovazione;
+	}
+
+	public void setQuotaInnovazione(BigDecimal quotaInnovazione) {
+		this.quotaInnovazione = quotaInnovazione;
+	}	
+
+	public BigDecimal getFondoart113() {
+		return fondoart113;
+	}
+
+	public void setFondoart113(BigDecimal fondoart113) {
+		this.fondoart113 = fondoart113;
+	}
+
+	public Collection<CopertureDefinitive> getCoperture() {
+		return coperture;
+	}
+
+	public void setCoperture(Collection<CopertureDefinitive> coperture) {
+		this.coperture = coperture;
+	}
+
+	public String getNote() {
+		return note;
+	}
+
+	public void setNote(String note) {
+		this.note = note;
+	}	
+}

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+	<display-name>CohesionServlet</display-name>
+	<servlet>
+		<servlet-name>Authentication</servlet-name>
+		<servlet-class>it.unicam.cs.cohesion.servlet.AuthServlet</servlet-class>
+		
+		<!-- percorso del Keystore (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>keystorePath</param-name>
+	     		<param-value>D:\\Universita\\Cohesion\\COHESION DA VEDERE\\SERVLET TEST\\my.p12</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- Tipo di Keystore  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>keystoreType</param-name>
+	     		<param-value>PKCS12</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- Password del keystore  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>pwdKeystore</param-name>
+	     		<param-value>pwd</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- Alias del certificato  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>aliasCertificate</param-name>
+	     		<param-value>be7446f14507a331c1b5b8ff70a66520_d0e8d7b1-bcb5-4128-9d8e-2fc4dc332132</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- password del certificato  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>pwdCertificate</param-name>
+	     		<param-value>pwd</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- password opzionale per criptare il token da inviare alle pagine di login (se non è impostata il token non sarà criptato ma solo firmato).
+	   	     Se impostata questa deve essere esattamente di 24 caratteri -->
+	   	<init-param>
+	     		<param-name>encryptionKey</param-name>
+	     		<param-value></param-value>
+	   	</init-param>
+	   	<!-- Url della pagina di login (è possibile sovrascrivere questo valore passando il parametro ReturnUrl alla servlet)-->
+	   	<init-param>
+	     		<param-name>urlRichiesta</param-name>
+	     		<param-value>http:localhost:8080/CohesionServlet/login.jsp</param-value>
+	   	</init-param>
+	   	
+		<!-- Url pubblica della pagina di check cohesion -->
+		<init-param>
+	     		<param-name>urlCheck</param-name>
+	     		<!-- <param-value>http://cohesion2.regione.marche.it/sso/Check.aspx</param-value> -->
+	     		<param-value>https://cohesion2.regione.marche.it/SPManager/WAYF.aspx</param-value>	     		
+	   	</init-param>		
+		<!-- Url pubblica della pagina locale di login a cui redirigere in caso di autenticazione fallita 
+		<init-param>
+	     		<param-name>urlIndex</param-name>
+	     		<param-value>index.jsp</param-value>
+	   	</init-param>
+	   	-->
+	   	
+	   	<!-- Url del webservice  (NON SERVE SE SI SPECIFICA webSso)-->
+	   	<init-param>
+	     		<param-name>wsSso</param-name>
+	     		<!-- <param-value>http://cohesion2.regione.marche.it/SSO/WsCheckSessionSSO.asmx</param-value> -->
+	     		<param-value>https://cohesion2.regione.marche.it/SPManager/wsCheckSessionSPM.asmx</param-value>
+	   	</init-param>	   
+	   		
+	    <!-- Url della webpage in sostituzione del WS -->
+	   	<init-param>
+	     		<param-name>webSso</param-name>
+	     		<!-- <param-value>https://cohesion2.regione.marche.it/SSO/webCheckSessionSSO.aspx</param-value> -->
+	     		<param-value>https://cohesion2.regione.marche.it/SPManager/webCheckSessionSSO.aspx</param-value>
+	   	</init-param>
+	   	<!-- Dati aggiuntivi da inviare a cohesion: può essere usato per restringere le modalità di autenticazione visualizzate o abilitare il logout SAML-->
+	   	<init-param>
+	     		<param-name>additionalData</param-name>
+	     		<!-- <param-value>dummy</param-value> -->
+	     		<param-value>http://localhost:8080/ProgrammaBiennale/naviox/signOut.jsp?organization=</param-value>
+	   	</init-param>
+	   	<load-on-startup>1</load-on-startup>
+	</servlet>
+	
+	<servlet>
+		<servlet-name>Logout</servlet-name>
+		<servlet-class>it.unicam.cs.cohesion.servlet.LogoutServlet</servlet-class>
+		
+		<!-- Url del webservice  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>wsSso</param-name>
+	     		<param-value>http://cohesion2.regione.marche.it/SSO/WsCheckSessionSSO.asmx</param-value>
+	   	</init-param>
+	   	-->
+	   	
+	    <!-- Url della webpage in sostituzione del WS -->
+	   	<init-param>
+	     		<param-name>webSso</param-name>
+	     		<param-value>https://cohesion2.regione.marche.it/SSO/webCheckSessionSSO.aspx</param-value>
+	   	</init-param>
+	   	
+	   	<!-- percorso del Keystore  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>keystorePath</param-name>
+	     		<param-value>D:\\Universita\\Cohesion\\COHESION DA VEDERE\\SERVLET TEST\\my.p12</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- Tipo di Keystore  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>keystoreType</param-name>
+	     		<param-value>PKCS12</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- Password del keystore  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>pwdKeystore</param-name>
+	     		<param-value>pwd</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- Alias del certificato  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>aliasCertificate</param-name>
+	     		<param-value>be7446f14507a331c1b5b8ff70a66520_d0e8d7b1-bcb5-4128-9d8e-2fc4dc332132</param-value>
+	   	</init-param>
+	   	-->
+	   	<!-- password del certificato  (NON SERVE SE SI SPECIFICA webSso)
+	   	<init-param>
+	     		<param-name>pwdCertificate</param-name>
+	     		<param-value>pwd</param-value>
+	   	</init-param>
+	   	-->
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Authentication</servlet-name>
+		<url-pattern>/Authentication</url-pattern>
+	</servlet-mapping>
+		<servlet-mapping>
+		<servlet-name>Logout</servlet-name>
+		<url-pattern>/Logout</url-pattern>
+	</servlet-mapping>
+</web-app>

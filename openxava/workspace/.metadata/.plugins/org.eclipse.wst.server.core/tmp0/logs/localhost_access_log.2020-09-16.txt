@@ -1,0 +1,6 @@
+192.168.2.173 - - [16/Sep/2020:09:24:57 +0200] "GET /DevMgmt/DiscoveryTree.xml HTTP/1.1" 404 1001
+192.168.2.173 - - [16/Sep/2020:09:25:00 +0200] "GET /DevMgmt/DiscoveryTree.xml HTTP/1.1" 404 1001
+192.168.2.147 - - [16/Sep/2020:09:36:49 +0200] "GET / HTTP/1.1" 404 951
+192.168.2.147 - - [16/Sep/2020:09:36:50 +0200] "GET /HNAP1/ HTTP/1.1" 404 963
+192.168.2.148 - - [16/Sep/2020:11:44:58 +0200] "GET /DevMgmt/DiscoveryTree.xml HTTP/1.1" 404 1001
+192.168.2.148 - - [16/Sep/2020:11:45:00 +0200] "GET /DevMgmt/DiscoveryTree.xml HTTP/1.1" 404 1001

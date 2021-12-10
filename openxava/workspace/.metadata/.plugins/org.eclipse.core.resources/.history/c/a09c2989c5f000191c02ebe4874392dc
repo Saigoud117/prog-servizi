@@ -1,0 +1,133 @@
+package actions;
+
+import java.util.*;
+
+import javax.persistence.*;
+
+import org.apache.commons.beanutils.*;
+import org.openxava.actions.*;
+import org.openxava.jpa.*;
+
+import ProgBien.*;
+
+public class CreateProceduraProgrammaAction extends ViewBaseAction {
+	public void execute() throws Exception {
+        String cui = getView().getValueString("cui"); // 1
+        
+        Procedure ent = (Procedure)getPreviousView().getEntity();
+        EntityManager em = XPersistence.getManager();   
+        ent = em.merge(ent);
+
+        ProcedureProgramma copyProc = new ProcedureProgramma();
+        
+        BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);
+
+        BeanUtils.copyProperties(copyProc, ent);
+
+        /*
+        copyProc.setAffidaenable(ent.isAffidaenable());
+        copyProc.setAggregabile(ent.isAggregabile());
+        copyProc.setAmbitogeografico(ent.getAmbitogeografico());
+        copyProc.setAnno0(ent.getAnno0());
+        copyProc.setAusa(ent.getAusa());
+        copyProc.setAvviata(ent.getAvviata());
+        copyProc.setCapprivato(ent.getCapprivato());
+        copyProc.setCodiceLivello1(ent.getCodiceLivello1());
+        copyProc.setCostia1(ent.getCostia1());
+        copyProc.setCostia2(ent.getCostia2());
+        copyProc.setCostias(ent.getCostias());
+        copyProc.setCostipregressi(ent.getCostipregressi());
+        copyProc.setCostitotali(ent.getCostitotali());
+        copyProc.setCpv(ent.getCpv());
+        copyProc.setCuiRicompreso(ent.getCuiRicompreso());
+        copyProc.setCuiRicompresoLavori(ent.getCuiRicompresoLavori());
+        copyProc.setCup(ent.getCup());
+        copyProc.setCupmaster(ent.getCupmaster());
+        copyProc.setData(ent.getData());
+        copyProc.setDeleted(false);
+        copyProc.setDescrizione(ent.getDescrizione());
+        copyProc.setDipendenti(ent.getDipendenti());
+        copyProc.setDivisione(ent.getDivisione());
+        copyProc.setDl662014(ent.getDl662014());
+        copyProc.setDurata(ent.getDurata());
+        copyProc.setExecenable(ent.isExecenable());
+        copyProc.setFondoart113(ent.getFondoart113());
+        copyProc.setGdl113affida(ent.getGdl113affida());
+        copyProc.setGdl113exec(ent.getGdl113exec());
+        copyProc.setGdl113program(ent.getGdl113program());
+        copyProc.setGdl113totale(ent.getGdl113totale());
+        copyProc.setImportobaseasta(ent.getImportobaseasta());
+        copyProc.setImportolotto(ent.getImportolotto());
+        copyProc.setLotto(ent.getLotto());
+        copyProc.setNonriproposta(ent.isNonriproposta());
+        copyProc.setNote(ent.getNote());
+        copyProc.setNoteaggregabile(ent.getNoteaggregabile());
+        copyProc.setNotenonriproposta(ent.getNotenonriproposta());
+        copyProc.setPdc(ent.getPdc());
+        copyProc.setPriorita(ent.getPriorita());
+        copyProc.setPrioritamotivation(ent.getPrioritamotivation());
+        copyProc.setProgettiict(ent.getProgettiict());
+        copyProc.setProgramenable(ent.isProgramenable());
+        copyProc.setQuantita(ent.getQuantita());
+        copyProc.setQuotaInnovazione(ent.getQuotaInnovazione());
+        copyProc.setRicompreso(ent.getRicompreso());
+        copyProc.setServizi(ent.getServizi());
+        copyProc.setSettore(ent.getSettore());
+        copyProc.setTaffidamento(ent.getTaffidamento());
+        copyProc.setTipcappriv(ent.getTipcappriv());
+        copyProc.setUmisura(ent.getUmisura());
+        copyProc.setVariante(ent.getVariante());
+        copyProc.setVerdi(ent.getVerdi());
+        */
+        
+        copyProc.setCui(cui); 
+
+        copyProc.setCoperture(new ArrayList<CopertureProgramma>());
+        copyProc.setQuadroeconomico(new ArrayList<QuadroEconomicoProgramma>());
+
+        em.persist(copyProc);                     
+
+        for (QuadroEconomico q: ent.getQuadroeconomico())
+        {
+            QuadroEconomicoProgramma qCopy = new QuadroEconomicoProgramma();
+            qCopy.setAliquotaiva(q.getAliquotaiva());
+            qCopy.setAmount(q.getAmount());
+            qCopy.setBase(q.getBase());
+            qCopy.setCapitolo(q.getCapitolo());
+            qCopy.setDescrizionevoce(q.getDescrizionevoce());
+            qCopy.setImportoiva(q.getImportoiva());
+            qCopy.setImportonetto(q.getImportonetto());
+            qCopy.setPdc(q.getPdc());
+            qCopy.setTipologia(q.getTipologia());            
+            qCopy.setProcedura(copyProc);
+            qCopy.setOid(null);
+            XPersistence.getManager().persist(qCopy);
+        }     
+
+        for (Coperture c: ent.getCoperture())
+        {
+        	CopertureProgramma cCopy = new CopertureProgramma();
+        	cCopy.setAltro(c.getAltro());
+        	cCopy.setAnno(c.getAnno());
+        	cCopy.setBilancio(c.getBilancio());
+        	cCopy.setMutuo(c.getMutuo());
+        	cCopy.setPatrimonio(c.getPatrimonio());
+        	cCopy.setPrivati(c.getPrivati());
+        	cCopy.setStima(c.getStima());
+        	cCopy.setTotale(c.getTotale());
+        	cCopy.setTrasfimmo(c.getTrasfimmo());
+        	cCopy.setVincolate(c.getVincolate());
+        	cCopy.setProcedura(copyProc);
+            cCopy.setOid(null);
+            XPersistence.getManager().persist(cCopy);
+        }  
+
+        XPersistence.commit();     
+
+        getPreviousView().setEditable(true);    
+        getPreviousView().setKeyEditable(false);                  
+        addMessage("Migration.Success");
+ 
+        closeDialog();                                      // 3
+    }
+}

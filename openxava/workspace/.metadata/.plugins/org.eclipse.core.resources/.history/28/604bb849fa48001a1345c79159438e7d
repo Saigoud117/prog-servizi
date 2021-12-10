@@ -1,0 +1,28 @@
+package report;
+
+import java.util.*;
+
+import javax.xml.bind.annotation.*;
+
+import ProgBien.*;
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType
+@XmlRootElement
+public class XmlReport {
+	
+	private List<Procedure> xmlreport;
+	
+	public XmlReport() {
+		
+	}
+
+	public List<Procedure> getXmlreport() {
+		return xmlreport;
+	}
+
+	public void setXmlreport(List<Procedure> xmlreport) {
+		this.xmlreport = xmlreport;
+	}
+	
+}

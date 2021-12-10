@@ -1,0 +1,1231 @@
+package actions;
+ 
+import java.math.*;
+import java.text.*;
+import java.util.*;
+
+import javax.persistence.*;
+
+import org.openxava.actions.*;
+import org.openxava.jpa.*;
+import org.openxava.util.*;
+import org.openxava.util.jxls.*;
+import org.openxava.web.servlets.*;
+
+import EsportazioneMitProg.*;
+import ProgBien.*;
+
+public class ExcelExport extends ViewBaseAction
+implements IForwardAction, JxlsConstants {                                                             // 1
+ 
+    private String forwardURI = null;
+ 
+    public void execute() throws Exception {
+        try {
+        	@SuppressWarnings("unchecked")
+    		List<Procedure> ProcedureFabbisogno = (List<Procedure>)XPersistence.getManager()
+    			    .createQuery(
+    			        "from Procedure p where p.stato.key in ('M', 'N', 'Z') and p.deleted = false and p.totalecoperture >= 40000.00 order by p.codiceinterno ASC")  // JPQL query
+    			    .getResultList();
+    		
+    		@SuppressWarnings("unchecked")
+    		List<ProcedureDefinitive> ProcedureConfermate = (List<ProcedureDefinitive>)XPersistence.getManager()
+    			    .createQuery(
+    			        "from ProcedureDefinitive p where p.stato.key = 'C' and p.deleted = false")  // JPQL query
+    			    .getResultList();
+    		
+    		@SuppressWarnings("unchecked")
+    		List<ProcedureDefinitive> ProcedureNonRiproposte = (List<ProcedureDefinitive>)XPersistence.getManager()
+    			    .createQuery(
+    			        "from ProcedureDefinitive p where p.stato.key = 'K' and p.deleted = false")  // JPQL query
+    			    .getResultList();
+    		
+    		Pubblicazione ent = (Pubblicazione)getView().getEntity();
+            EntityManager em = XPersistence.getManager();   
+            ent = em.merge(ent);
+        	
+            Referente r = new Referente();
+    		r.setCognome(ent.getReferente().getCognome());
+    		r.setNome(ent.getReferente().getCognome());
+    		r.setCfPiva(ent.getReferente().getCf());
+    		
+    		PubblicazioneFornitureServizi p = new PubblicazioneFornitureServizi();		
+    		p.setId(ent.getId());
+    		p.setCodiceFiscaleSA(ent.getCodiceFiscaleSA());
+    		p.setUfficio(ent.getUfficio());
+    		p.setAnno(ent.getAnno());
+    		p.setDescrizione(ent.getDescrizione());
+    		p.setNumeroApprovazione(ent.getNumeroApprovazione());
+    		
+    		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+    		
+    		p.setDataApprovazione(String.valueOf(formatter.format(ent.getDataApprovazione())));
+    		p.setDataPubblicazioneApprovazione(String.valueOf(formatter.format(ent.getDataPubblicazioneApprovazione())));
+    		p.setTitoloAttoApprovazione(ent.getTitoloAttoApprovazione());
+    		p.setUrlAttoApprovazione(ent.getUrlApprovazione());
+    		p.setReferente(r);
+    		if (ProcedureFabbisogno.size() > 0 || ProcedureConfermate.size() > 0)
+    			p.setAcquisti(mapperFornitureServizi(ProcedureFabbisogno, ProcedureConfermate, 2020));
+    		if (ProcedureNonRiproposte.size() > 0)
+    			p.setAcquistiNonRiproposti(mapperAcquistiNonRiproposti(ProcedureNonRiproposte));
+    			
+            JxlsWorkbook tracciato = createTracciato(p);
+        	//JxlsWorkbook tracciato = createScenario();
+            getRequest().getSession().setAttribute(ReportXLSServlet.SESSION_XLS_REPORT, tracciato);   // 2
+            setForwardURI("/xava/report.xls?time=" + System.currentTimeMillis());                      // 3
+        } catch (Exception e) {
+            addError(e.getMessage());
+        }
+    }
+    
+    private JxlsWorkbook createScenario() throws Exception {
+    	JxlsWorkbook scenarioWB = new JxlsWorkbook("TracciatoFornitureServizi");                       // 4
+        JxlsSheet scenario = scenarioWB.addSheet("TracciatoFornitureServizi");                                           // 5
+        scenario.setValue(1, 1, "Date:");                                                              // 6
+        scenario.setValue(2, 1, new Date());                                                           // 7
+        scenario.setValue(1, 2, "Value:");
+        scenario.setValue(2, 2, 3.1415);                                                               // 8
+        return scenarioWB;
+    }
+ 
+    private JxlsWorkbook createTracciato(PubblicazioneFornitureServizi p) throws Exception {
+        JxlsWorkbook tracciatoWB = new JxlsWorkbook("TracciatoFornitureServizi");                       // 4
+        JxlsSheet programma = tracciatoWB.addSheet("Programma");                        // 5
+        
+        programma.setValue(1, 1, "Tabella");
+        programma.setValue(1, 2, "Programma");
+        programma.setValue(2, 1, "id");
+        programma.setValue(2, 2, p.getId());
+        programma.setValue(3, 1, "codiceFiscaleSA");
+        programma.setValue(3, 2, p.getCodiceFiscaleSA());
+        programma.setValue(4, 1, "Ufficio");
+        programma.setValue(4, 2, p.getUfficio());
+        programma.setValue(5, 1, "anno");
+        programma.setValue(5, 2, p.getAnno());
+        programma.setValue(6, 1, "descrizione");
+        programma.setValue(6, 2, p.getDescrizione());
+        programma.setValue(7, 1, "numeroApprovazione");
+        programma.setValue(7, 2, p.getNumeroApprovazione());
+        programma.setValue(8, 1, "dataApprovazione");
+        programma.setValue(8, 2, p.getDataApprovazione());
+        programma.setValue(9, 1, "dataPubblicazioneApprovazione");
+        programma.setValue(9, 2, p.getDataPubblicazioneApprovazione());
+        programma.setValue(10, 1, "titoloAttoApprovazione");
+        programma.setValue(10, 2, p.getTitoloAttoApprovazione());
+        programma.setValue(11, 1, "urlAttoApprovazione");
+        programma.setValue(11, 2, p.getUrlAttoApprovazione());
+        programma.setValue(12, 1, "idRicevuto");
+        programma.setValue(12, 2, p.getIdRicevuto());
+           
+        JxlsSheet referente = tracciatoWB.addSheet("Referente");
+        referente.setValue(1, 1, "Tabella");
+        referente.setValue(1, 2, "Referente");
+        referente.setValue(2, 1, "cognome");
+        referente.setValue(2, 2, p.getReferente().getCognome());
+        referente.setValue(3, 1, "nome");
+        referente.setValue(3, 2, p.getReferente().getNome());
+        referente.setValue(4, 1, "cfPiva");
+        referente.setValue(4, 2, p.getReferente().getCfPiva());
+        referente.setValue(5, 1, "indirizzo");
+        referente.setValue(5, 2, p.getReferente().getIndirizzo());
+        referente.setValue(6, 1, "civico");
+        referente.setValue(6, 2, p.getReferente().getCivico());
+        referente.setValue(7, 1, "provincia");
+        referente.setValue(7, 2, p.getReferente().getProvincia());
+        referente.setValue(8, 1, "cap");
+        referente.setValue(8, 2, p.getReferente().getCap());
+        referente.setValue(9, 1, "luogoIstat");
+        referente.setValue(9, 2, p.getReferente().getLuogoIstat());
+        
+        JxlsSheet tracciato = tracciatoWB.addSheet("Forniture Servizi");
+        tracciato.setValue(1, 1, "Tabella");
+        tracciato.setValue(2, 1, "cui");
+        tracciato.setValue(3, 1, "settore");
+        tracciato.setValue(4, 1, "codiceInterno");
+        tracciato.setValue(5, 1, "descrizione");
+        tracciato.setValue(6, 1, "anno");
+        tracciato.setValue(7, 1, "esenteCup");
+        tracciato.setValue(8, 1, "cup");
+        tracciato.setValue(9, 1, "acquistoRicompreso");
+        tracciato.setValue(10, 1, "cuiCollegato");
+        tracciato.setValue(11, 1, "cpv");
+        tracciato.setValue(12, 1, "nuts");
+        tracciato.setValue(13, 1, "quantita");
+        tracciato.setValue(14, 1, "unitaMisura");
+        tracciato.setValue(15, 1, "priorita");
+        tracciato.setValue(16, 1, "lottoFunzionale");
+        tracciato.setValue(17, 1, "durataInMesi");
+        tracciato.setValue(18, 1, "nuovoAffidamento");
+        tracciato.setValue(19, 1, "risorseVincolatePerLegge1");
+        tracciato.setValue(20, 1, "risorseVincolatePerLegge2");
+        tracciato.setValue(21, 1, "risorseVincolatePerLeggeSucc");
+        tracciato.setValue(22, 1, "risorseMutuo1");
+        tracciato.setValue(23, 1, "risorseMutuo2");
+        tracciato.setValue(24, 1, "risorseMutuoSucc");
+        tracciato.setValue(25, 1, "risorsePrivati1");
+        tracciato.setValue(26, 1, "risorsePrivati2");
+        tracciato.setValue(27, 1, "risorsePrivatiSucc");
+        tracciato.setValue(28, 1, "risorseBilancio1");
+        tracciato.setValue(29, 1, "risorseBilancio2");
+        tracciato.setValue(30, 1, "risorseBilancioSucc");
+        tracciato.setValue(31, 1, "risorseArt3_1");
+        tracciato.setValue(32, 1, "risorseArt3_2");
+        tracciato.setValue(33, 1, "risorseArt3_Succ");
+        tracciato.setValue(34, 1, "risorseImmobili1");
+        tracciato.setValue(35, 1, "risorseImmobili2");
+        tracciato.setValue(36, 1, "risorseImmobiliSucc");
+        tracciato.setValue(37, 1, "risorseAltro1");
+        tracciato.setValue(38, 1, "risorseAltro2");
+        tracciato.setValue(39, 1, "risorseAltroSucc");
+        tracciato.setValue(40, 1, "speseSostenuta");
+        tracciato.setValue(41, 1, "tipologiaCapitalePrivato");
+        tracciato.setValue(42, 1, "meseAvvioProcedura");
+        tracciato.setValue(43, 1, "delega");
+        tracciato.setValue(44, 1, "codiceSoggettoDelegato");
+        tracciato.setValue(45, 1, "nomeSoggettoDelegato");
+        tracciato.setValue(46, 1, "variato");
+        tracciato.setValue(47, 1, "note");
+        tracciato.setValue(48, 1, "importoRisorseFinaziarie");
+        tracciato.setValue(49, 1, "importoRisorseFinanziarieRegionali");
+        tracciato.setValue(50, 1, "importoRisorseFinanziarieAltro");
+        tracciato.setValue(51, 1, "direzioneGenerale");
+        tracciato.setValue(52, 1, "strutturaOperativa");
+        tracciato.setValue(53, 1, "referenteDati");
+        tracciato.setValue(54, 1, "dirigenteResponsabile");
+        tracciato.setValue(55, 1, "proceduraAffidamento");
+        tracciato.setValue(56, 1, "acquistoVerdi");
+        tracciato.setValue(57, 1, "normativaRiferimento");
+        tracciato.setValue(58, 1, "oggettoVerdi");
+        tracciato.setValue(59, 1, "cpvVerdi");
+        tracciato.setValue(60, 1, "importoNettoIvaVerdi");
+        tracciato.setValue(61, 1, "importoIvaVerdi");
+        tracciato.setValue(62, 1, "importoTotVerdi");
+        tracciato.setValue(63, 1, "acquistoMaterialiRiciclati");
+        tracciato.setValue(64, 1, "oggettoMatRic");
+        tracciato.setValue(65, 1, "cpvMatRic");
+        tracciato.setValue(66, 1, "importoNettoIvaMatRic");
+        tracciato.setValue(67, 1, "importoIvaMatRic");
+        tracciato.setValue(68, 1, "importoTotMatRic");
+        tracciato.setValue(69, 1, "importoIva1");
+        tracciato.setValue(70, 1, "importoIva2");
+        tracciato.setValue(71, 1, "importoIvaSucc");
+        tracciato.setValue(72, 1, "coperturaFinanziaria");
+        tracciato.setValue(73, 1, "valutazione");
+        tracciato.setValue(74, 1, "importoTotale");
+        tracciato.setValue(75, 1, "rupNome");
+        tracciato.setValue(76, 1, "rupCognome");
+        tracciato.setValue(77, 1, "rupCf");
+        
+        int i = 2;
+        for (Acquisti a: p.getAcquisti())
+        {
+            tracciato.setValue(1, i, "Forniture/Servizi");
+            tracciato.setValue(2, i, a.getCui());
+            tracciato.setValue(3, i, a.getSettore());
+            tracciato.setValue(4, i, a.getCodiceInterno());
+            tracciato.setValue(5, i, a.getDescrizione());
+            tracciato.setValue(6, i, a.getAnno());
+            tracciato.setValue(7, i, a.getEsenteCup());
+            tracciato.setValue(8, i, a.getCup());
+            tracciato.setValue(9, i, a.getAcquistoRicompreso());
+            tracciato.setValue(10, i, a.getCuiCollegato()); 
+            tracciato.setValue(11, i, a.getCpv());
+            tracciato.setValue(12, i, a.getNuts());
+            tracciato.setValue(13, i, a.getQuantita());
+            tracciato.setValue(14, i, a.getUnitaMisura());
+            tracciato.setValue(15, i, a.getPriorita());
+            tracciato.setValue(16, i, a.getLottoFunzionale());
+            tracciato.setValue(17, i, a.getDurataInMesi());
+            tracciato.setValue(18, i, a.getNuovoAffidamento());
+            tracciato.setValue(19, i, a.getRisorseVincolatePerLegge1());
+            tracciato.setValue(20, i, a.getRisorseVincolatePerLegge2());
+            tracciato.setValue(21, i, a.getRisorseVincolatePerLeggeSucc());
+            tracciato.setValue(22, i, a.getRisorseMutuo1());
+            tracciato.setValue(23, i, a.getRisorseMutuo2());
+            tracciato.setValue(24, i, a.getRisorseMutuoSucc());
+            tracciato.setValue(25, i, a.getRisorsePrivati1());
+            tracciato.setValue(26, i, a.getRisorsePrivati2());
+            tracciato.setValue(27, i, a.getRisorsePrivatiSucc());
+            tracciato.setValue(28, i, a.getRisorseBilancio1());
+            tracciato.setValue(29, i, a.getRisorseBilancio2());
+            tracciato.setValue(30, i, a.getRisorseBilancioSucc());
+            tracciato.setValue(31, i, a.getRisorseArt3_1());
+            tracciato.setValue(32, i, a.getRisorseArt3_2());            
+            tracciato.setValue(33, i, a.getRisorseArt3_Succ());            
+            tracciato.setValue(34, i, a.getRisorseImmobili1());           
+            tracciato.setValue(35, i, a.getRisorseImmobili2());            
+            tracciato.setValue(36, i, a.getRisorseImmobiliSucc());            
+            tracciato.setValue(37, i, a.getRisorseAltro1());            
+            tracciato.setValue(38, i, a.getRisorseAltro2());            
+            tracciato.setValue(39, i, a.getRisorseAltroSucc());            
+            tracciato.setValue(40, i, a.getSpeseSostenute());            
+            tracciato.setValue(41, i, a.getTipologiaCapitalePrivato());            
+            tracciato.setValue(42, i, a.getMeseAvvioProcedura());            
+            tracciato.setValue(43, i, a.getDelega());            
+            tracciato.setValue(44, i, a.getCodiceSoggettoDelegato());            
+            tracciato.setValue(45, i, a.getNomeSoggettoDelegato());            
+            tracciato.setValue(46, i, a.getVariato());            
+            tracciato.setValue(47, i, a.getNote());            
+            tracciato.setValue(48, i, a.getImportoRisorseFinanziarie());            
+            tracciato.setValue(49, i, a.getImportoRisorseFinanziarieRegionali());            
+            tracciato.setValue(50, i, a.getImportoRisorseFinanziarieAltro());            
+            tracciato.setValue(51, i, a.getDirezioneGenerale());           
+            tracciato.setValue(52, i, a.getStrutturaOperativa());            
+            tracciato.setValue(53, i, a.getReferenteDati());            
+            tracciato.setValue(54, i, a.getDirigenteResponsabile());            
+            tracciato.setValue(55, i, a.getProceduraAffidamento());            
+            tracciato.setValue(56, i, a.getAcquistoVerdi());           
+            tracciato.setValue(57, i, a.getNormativaRiferimento());            
+            tracciato.setValue(58, i, a.getOggettoVerdi());           
+            tracciato.setValue(59, i, a.getCpvVerdi());          
+            tracciato.setValue(60, i, a.getImportoNettoIvaVerdi());           
+            tracciato.setValue(61, i, a.getImportoIvaVerdi());         
+            tracciato.setValue(62, i, a.getImportoTotVerdi());           
+            tracciato.setValue(63, i, a.getAcquistoMaterialiRiciclati());         
+            tracciato.setValue(64, i, a.getOggettoMatRic());
+            tracciato.setValue(65, i, a.getCpvMatRic());            
+            tracciato.setValue(66, i, a.getImportoNettoIvaMatRic());            
+            tracciato.setValue(67, i, a.getImportoIvaMatRic());            
+            tracciato.setValue(68, i, a.getImportoTotMatRic());            
+            tracciato.setValue(69, i, a.getImportoIva1());            
+            tracciato.setValue(70, i, a.getImportoIva2());            
+            tracciato.setValue(71, i, a.getImportoIvaSucc());            
+            tracciato.setValue(72, i, a.getCoperturaFinanziaria());            
+            tracciato.setValue(73, i, a.getValutazione());    
+            tracciato.setValue(74, i, a.getImportoTotale());    
+            tracciato.setValue(75, i, a.getRup().getNome());            
+            tracciato.setValue(76, i, a.getRup().getCognome());            
+            tracciato.setValue(77, i, a.getRup().getCfPiva());     
+            i = i + 1;
+        }
+        
+        JxlsSheet acquistiNonRiproposti = tracciatoWB.addSheet("Aquisti non riproposti");
+        
+        acquistiNonRiproposti.setValue(1, 1, "Tabella");
+        acquistiNonRiproposti.setValue(2, 1, "cui");
+        acquistiNonRiproposti.setValue(3, 1, "cup");
+        acquistiNonRiproposti.setValue(4, 1, "descrizione");
+        acquistiNonRiproposti.setValue(5, 1, "importo");
+        acquistiNonRiproposti.setValue(6, 1, "priorita");
+        acquistiNonRiproposti.setValue(7, 1, "motivo");
+        
+        i = 2;
+        
+        for (AcquistiNonRiproposti a: p.getAcquistiNonRiproposti())
+        {
+        	acquistiNonRiproposti.setValue(1, i, "Acquisti non riproposti");
+        	acquistiNonRiproposti.setValue(2, i, a.getCui());
+        	acquistiNonRiproposti.setValue(3, i, a.getCup());
+        	acquistiNonRiproposti.setValue(4, i, a.getDescrizione());
+        	acquistiNonRiproposti.setValue(5, i, a.getImporto());
+        	acquistiNonRiproposti.setValue(6, i, a.getPriorita());
+        	acquistiNonRiproposti.setValue(7, i, a.getMotivo());
+            i = i + 1;
+        }
+        return tracciatoWB;
+    }
+ 
+    public String getForwardURI() {
+        return forwardURI;
+    }
+ 
+    public boolean inNewWindow() {
+        if (forwardURI == null) return false;
+        return true;
+    }
+ 
+    public void setForwardURI(String forwardURI) {
+        this.forwardURI = forwardURI;
+    }
+    
+private ArrayList<Acquisti> mapperFornitureServizi(List<Procedure> procedure, List<ProcedureDefinitive> proceduredefinitive, int anniRifMan) {
+		
+		ArrayList<Acquisti> acquisti = new ArrayList<Acquisti>();
+		
+		int i = 1;
+		for (Procedure p: procedure) {
+			Acquisti a = new Acquisti();
+			if (p.getUltimopianoapprovato() != null) {
+				a.setCui(p.getUltimopianoapprovato().getCui());
+			}
+			else {
+				a.setCui(p.getSettore().toString().toUpperCase().substring(0, 1).concat("80008630420").concat(p.getAnno0().toString()).concat(p.CodiceInterno(Integer.toString(i))));
+				i++;
+			}
+			a.setSettore(p.getSettore().toString().substring(0, 1));
+			a.setCodiceInterno(p.getCodiceinterno().toString());
+			a.setDescrizione(p.getDescrizione());
+			Calendar calendar = Calendar.getInstance();
+	        calendar.setTime(p.getData());
+	        
+	        if (calendar.get(Calendar.YEAR) == anniRifMan)
+	        	a.setAnno(Integer.toString(1));
+	        else if (calendar.get(Calendar.YEAR) == anniRifMan + 1)
+	        	a.setAnno(Integer.toString(2));
+	        else if (calendar.get(Calendar.YEAR) == anniRifMan + 2)
+				a.setAnno(Integer.toString(3));
+				
+	        if (p.getCup() != null && !p.getCup().isEmpty())
+	        {
+	        	a.setEsenteCup("2");
+	        	a.setCup(p.getCup());
+	        }
+	        else
+	        	a.setEsenteCup("1");
+	        
+	        if (p.getRicompreso().toString() == "No")
+	        {
+	        	a.setAcquistoRicompreso("1");
+	        }
+	        else if (p.getRicompreso().toString() == "Si")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompreso().getCui());
+	        }
+	        else if (p.getRicompreso().toString() == "SiLavori")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompresoLavori());
+	        }
+	        else if (p.getRicompreso().toString() == "SiInterventiOacquistiDiversi")
+	        {
+	        	a.setAcquistoRicompreso("4");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoLavori")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoServizi")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        
+	        a.setCpv(p.getCpv().getCodice());
+			a.setNuts(p.getAmbitogeografico().getCodice());
+			if (p.getQuantita() != null)
+				a.setQuantita(p.getQuantita().toString());
+			
+			if (p.getUmisura() != null)
+			{
+				switch (p.getUmisura().getDescrizione()) {
+					case "ora":
+						a.setUnitaMisura("1");
+						break;
+					case "giorno":
+						a.setUnitaMisura("2");
+						break;
+					case "grammo":
+						a.setUnitaMisura("3");
+						break;
+					case "chilogrammo":
+						a.setUnitaMisura("4");
+						break;
+					case "quintale":
+						a.setUnitaMisura("5");
+						break;
+					case "tonnellata":
+						a.setUnitaMisura("6");
+						break;
+					case "millilitro":
+						a.setUnitaMisura("7");
+						break;
+					case "litro":
+						a.setUnitaMisura("8");
+						break;
+					case "ettolitro":
+						a.setUnitaMisura("9");
+						break;
+					case "millimetro":
+						a.setUnitaMisura("10");
+						break;
+					case "centimetro":
+						a.setUnitaMisura("11");
+						break;
+					case "metro":
+						a.setUnitaMisura("12");
+						break;
+					case "chilometro":
+						a.setUnitaMisura("13");
+						break;
+					case "metro quadrato":
+						a.setUnitaMisura("14");
+						break;
+					case "metro cubo":
+						a.setUnitaMisura("15");
+						break;
+					case "a corpo":
+						a.setUnitaMisura("16");
+						break;
+					case "unità":
+						a.setUnitaMisura("17");
+						break;
+					default:
+						break;
+				}
+			}
+			
+			switch (p.getPriorita().toString()) {
+				case "max":
+					a.setPriorita("1");
+					break;
+				case "media":
+					a.setPriorita("2");
+				case "min":
+					a.setPriorita("3");
+				default:
+					break;
+			}
+			if (p.getLotto())
+				a.setLottoFunzionale("1");
+			else
+				a.setLottoFunzionale("2");
+			
+			a.setDurataInMesi(Integer.toString(p.getDurata()));
+			
+			if (p.getTaffidamento().toString().equals("NuovoContratto"))
+				a.setNuovoAffidamento("1");
+			else
+				a.setNuovoAffidamento("2");
+			
+			BigDecimal qInn = new BigDecimal(0);
+			BigDecimal qExec = new BigDecimal(0);
+			BigDecimal qAff = new BigDecimal(0);
+			BigDecimal qProg = new BigDecimal(0);
+			
+			//calcolo degli incentivi
+			if (p.getRicompreso() != null && p.getRicompreso().toString() == "No")
+			{
+				if (p.isFondoenable()) {
+					qInn = p.getQuotaInnovazioneTotale().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qExec = p.getGdl113Exec().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qAff = p.getGdl113Affida().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qProg = p.getGdl113Program().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isQuotainnovazioneenable() && !p.isFondoenable())
+		    	{
+		    		qInn = p.getQuotaInnovazioneTotale().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isQuotagdlenable() && !p.isFondoenable())
+		    	{
+		    		qExec = p.getGdl113Exec().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qAff = p.getGdl113Affida().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qProg = p.getGdl113Program().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isProgramenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qProg = p.getGdl113Program().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isAffidaenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qAff = p.getGdl113Affida().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isExecenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qExec = p.getGdl113Exec().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+			}
+			
+			BigDecimal vinA1 = new BigDecimal(0);
+			BigDecimal vinA2 = new BigDecimal(0);
+			BigDecimal vinA3 = new BigDecimal(0);
+			
+			BigDecimal mutA1 = new BigDecimal(0);
+			BigDecimal mutA2 = new BigDecimal(0);
+			BigDecimal mutA3 = new BigDecimal(0);
+			
+			BigDecimal capA1 = new BigDecimal(0);
+			BigDecimal capA2 = new BigDecimal(0);
+			BigDecimal capA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1 = new BigDecimal(0);
+			BigDecimal bilA2 = new BigDecimal(0);
+			BigDecimal bilA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1s = new BigDecimal(0);
+			BigDecimal bilA2s = new BigDecimal(0);
+			BigDecimal bilA3s = new BigDecimal(0);
+			
+			BigDecimal bilA1n = new BigDecimal(0);
+			BigDecimal bilA2n = new BigDecimal(0);
+			BigDecimal bilA3n = new BigDecimal(0);
+			
+			BigDecimal finA1 = new BigDecimal(0);
+			BigDecimal finA2 = new BigDecimal(0);
+			BigDecimal finA3 = new BigDecimal(0);
+			
+			BigDecimal traA1 = new BigDecimal(0);
+			BigDecimal traA2 = new BigDecimal(0);
+			BigDecimal traA3 = new BigDecimal(0);
+			
+			BigDecimal altA1 = new BigDecimal(0);
+			BigDecimal altA2 = new BigDecimal(0);
+			BigDecimal altA3 = new BigDecimal(0);
+			
+			BigDecimal ivaA1 = new BigDecimal(0);
+			BigDecimal ivaA2 = new BigDecimal(0);
+			BigDecimal ivaA3 = new BigDecimal(0);
+			
+			boolean coperturafinaziaria = true;
+			
+			String caratterizzazioneCapitaliPrivati = "";
+			
+			for (QuadroEconomico q: p.getQuadroeconomico())
+	        {
+				BigDecimal percentageA3 = new BigDecimal(100).subtract(q.getPercentualeA1().add(q.getPercentualeA2()));
+				
+				if (q.getImportoiva() != null && !q.getImportoiva().equals(new BigDecimal(0)))
+				{
+					if (q.getPercentualeA1().compareTo(new BigDecimal(0)) != 0) 
+						ivaA1 = ivaA1.add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)));
+					if (q.getPercentualeA2().compareTo(new BigDecimal(0)) != 0) 
+						ivaA2 =	ivaA2.add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100)));
+					if (percentageA3.compareTo(new BigDecimal(0)) != 0) 
+						ivaA3 = ivaA3.add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100)));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("VIN"))
+				{
+					vinA1 = vinA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					vinA2 = vinA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					vinA3 = vinA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("MUT"))
+				{
+					mutA1 = mutA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					mutA2 = mutA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					mutA3 = mutA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("CAP"))
+				{
+					caratterizzazioneCapitaliPrivati = q.getCaratterizzazioneCopertura().getNome();
+					capA1 = capA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					capA2 = capA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					capA3 = capA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("BIL"))
+				{
+					bilA1 = bilA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					bilA2 = bilA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					bilA3 = bilA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					
+					if (q.getCaratterizzazioneCopertura().getNome().equals("stanziato"))
+					{
+						bilA1s = bilA1s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2s = bilA2s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3s = bilA3s.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+					else if (q.getCaratterizzazioneCopertura().getNome().equals("anni successivi"))
+					{
+						coperturafinaziaria = false;
+						bilA1n = bilA1n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2n = bilA2n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3n = bilA3n.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("FIN"))
+				{
+					finA1 = finA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					finA2 = finA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					finA3 = finA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("TRA"))
+				{
+					traA1 = traA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					traA2 = traA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					traA3 = traA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("ALT"))
+				{
+					altA1 = altA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					altA2 = altA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					altA3 = altA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+	        }     
+			
+			a.setRisorseVincolatePerLegge1(vinA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseVincolatePerLegge2(vinA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseVincolatePerLeggeSucc(vinA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseMutuo1(mutA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseMutuo2(mutA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseMutuoSucc(mutA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorsePrivati1(capA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorsePrivati2(capA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorsePrivatiSucc(capA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseBilancio1(bilA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).add(qInn).add(qAff).add(qProg).toString());
+			a.setRisorseBilancio2(bilA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseBilancioSucc(bilA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).add(qExec).toString());
+			a.setRisorseArt3_1(finA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseArt3_2(finA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseArt3_Succ(finA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseImmobili1(traA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseImmobili2(traA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseImmobiliSucc(traA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseAltro1(altA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseAltro2(altA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseAltroSucc(altA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			if (p.getCostipregressi() != null)
+				a.setSpeseSostenute(p.getCostipregressi().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+
+			if (!caratterizzazioneCapitaliPrivati.isEmpty())
+			{
+				switch (caratterizzazioneCapitaliPrivati)
+				{
+					case "altro":
+						a.setTipologiaCapitalePrivato("9");
+						break;
+					case "finanza di progetto":
+						a.setTipologiaCapitalePrivato("1");
+						break;
+					case "concessione di costruzione e gestione":
+						a.setTipologiaCapitalePrivato("2");
+						break;
+					case "sponsorizzazione":
+						a.setTipologiaCapitalePrivato("3");
+						break;
+					case "società partecipate o di scopo":
+						a.setTipologiaCapitalePrivato("4");
+						break;
+					case "locazione finanziaria":
+						a.setTipologiaCapitalePrivato("5");
+						break;
+					case "contratto di disponibilità":
+						a.setTipologiaCapitalePrivato("6");
+						break;
+				}
+			}
+			
+			a.setMeseAvvioProcedura(Integer.toString(calendar.get(Calendar.MONTH) + 1));
+			
+			if (p.getAusa().getDenominazione().contains("CONSIP"))
+			{
+				a.setDelega("1");
+				a.setCodiceSoggettoDelegato(p.getAusa().getCodice());
+				a.setNomeSoggettoDelegato(p.getAusa().getDenominazione());
+			}
+			else
+				a.setDelega("2");
+			
+			//a.setVariato("");
+			
+			a.setNote(p.getNote());
+			
+			//a.setImportoRisorseFinanziarie("0.00");
+			//a.setImportoRisorseFinanziarieRegionali("0.00");
+			//a.setImportoRisorseFinanziarieAltro("0.00");
+			/*
+			a.setDirezioneGenerale("");
+			a.setStrutturaOperativa("");
+			a.setReferenteDati("");
+			a.setDirigenteResponsabile("");
+			a.setProceduraAffidamento("1");
+			*/
+			if (p.getVerdi() && p.getOggettoAcquistiVerdi() != null && !p.getOggettoAcquistiVerdi().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()) == p.getCostoTotale())
+					a.setAcquistoVerdi("2");
+				else
+					a.setAcquistoVerdi("3");
+				a.setNormativaRiferimento(p.getRiferimentoNormativoVerdi());
+				a.setOggettoVerdi(p.getOggettoAcquistiVerdi());
+				a.setCpvVerdi(p.getCpvAcquistiVerdi());
+				a.setImportoNettoIvaVerdi(p.getImportoNettoAcquistiVerdi().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoIvaVerdi(p.getAliquotaIvaAcquistiVerdi().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoTotVerdi(p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()).setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			}
+			else
+				a.setAcquistoVerdi("1");
+			if (p.getOggettoAcquistiMaterialiRiciclati() != null && !p.getOggettoAcquistiMaterialiRiciclati().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()) == p.getCostoTotale())
+					a.setAcquistoMaterialiRiciclati("2");
+				else
+					a.setAcquistoMaterialiRiciclati("3");
+				a.setOggettoMatRic(p.getOggettoAcquistiMaterialiRiciclati());
+				a.setCpvMatRic(p.getCpvAcquistiMaterialiRiciclati());
+				a.setImportoNettoIvaMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoIvaMatRic(p.getAliquotaIvaAcquistiMaterialiRiciclati().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoTotMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()).setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			}
+			else
+				a.setAcquistoMaterialiRiciclati("1");
+
+			/*
+			a.setImportoIva1(ivaA1.toString());
+			a.setImportoIva2(ivaA2.toString());
+			a.setImportoIvaSucc(ivaA3.toString());
+			*/
+			
+			if (coperturafinaziaria)
+				a.setCoperturaFinanziaria("1");
+			else 
+				a.setCoperturaFinanziaria("2");
+			a.setValutazione("1");
+			a.setImportoTotale(p.getTotaleCoperture().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRup(mapperRup(p.getDipendenti()));
+			acquisti.add(a);
+		}
+		
+		for (ProcedureDefinitive p: proceduredefinitive) {
+			Acquisti a = new Acquisti();
+			a.setCui(p.getCui());
+			a.setSettore(p.getSettore().toString().substring(0, 1));
+			a.setCodiceInterno(p.getCui().substring(16, 21));
+			a.setDescrizione(p.getDescrizione());
+			Calendar calendar = Calendar.getInstance();
+	        calendar.setTime(p.getData());
+	        
+	        if (calendar.get(Calendar.YEAR) == p.getAnno0())
+	        	a.setAnno(Integer.toString(1));
+	        else if (calendar.get(Calendar.YEAR) == p.getAnno0() + 1)
+	        	a.setAnno(Integer.toString(2));
+	        else if (calendar.get(Calendar.YEAR) == p.getAnno0() + 2)
+				a.setAnno(Integer.toString(3));
+				
+	        if (p.getCup() != null && !p.getCup().isEmpty())
+	        {
+	        	a.setEsenteCup("2");
+	        	a.setCup(p.getCup());
+	        }
+	        else
+	        	a.setEsenteCup("1");
+	        
+	        if (p.getRicompreso().toString() == "No")
+	        {
+	        	a.setAcquistoRicompreso("1");
+	        }
+	        else if (p.getRicompreso().toString() == "Si")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompreso().getCui());
+	        }
+	        else if (p.getRicompreso().toString() == "SiLavori")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompresoLavori());
+	        }
+	        else if (p.getRicompreso().toString() == "SiInterventiOacquistiDiversi")
+	        {
+	        	a.setAcquistoRicompreso("4");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoLavori")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoServizi")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        
+	        a.setCpv(p.getCpv().getCodice());
+			a.setNuts(p.getAmbitogeografico().getCodice());
+			
+			if (p.getQuantita() != null)
+				a.setQuantita(p.getQuantita().toString());
+			
+			if (p.getUmisura() != null)
+			{
+				switch (p.getUmisura().getDescrizione()) {
+					case "ora":
+						a.setUnitaMisura("1");
+						break;
+					case "giorno":
+						a.setUnitaMisura("2");
+						break;
+					case "grammo":
+						a.setUnitaMisura("3");
+						break;
+					case "chilogrammo":
+						a.setUnitaMisura("4");
+						break;
+					case "quintale":
+						a.setUnitaMisura("5");
+						break;
+					case "tonnellata":
+						a.setUnitaMisura("6");
+						break;
+					case "millilitro":
+						a.setUnitaMisura("7");
+						break;
+					case "litro":
+						a.setUnitaMisura("8");
+						break;
+					case "ettolitro":
+						a.setUnitaMisura("9");
+						break;
+					case "millimetro":
+						a.setUnitaMisura("10");
+						break;
+					case "centimetro":
+						a.setUnitaMisura("11");
+						break;
+					case "metro":
+						a.setUnitaMisura("12");
+						break;
+					case "chilometro":
+						a.setUnitaMisura("13");
+						break;
+					case "metro quadrato":
+						a.setUnitaMisura("14");
+						break;
+					case "metro cubo":
+						a.setUnitaMisura("15");
+						break;
+					case "a corpo":
+						a.setUnitaMisura("16");
+						break;
+					case "unità":
+						a.setUnitaMisura("17");
+						break;
+					default:
+						break;
+				}
+			}
+			
+			switch (p.getPriorita().toString()) {
+				case "max":
+					a.setPriorita("1");
+					break;
+				case "media":
+					a.setPriorita("2");
+				case "min":
+					a.setPriorita("3");
+				default:
+					break;
+			}
+			if (p.getLotto())
+				a.setLottoFunzionale("1");
+			else
+				a.setLottoFunzionale("2");
+			
+			a.setDurataInMesi(Integer.toString(p.getDurata()));
+			
+			if (p.getTaffidamento().toString().equals("NuovoContratto"))
+				a.setNuovoAffidamento("1");
+			
+			BigDecimal qInn = new BigDecimal(0);
+			BigDecimal qExec = new BigDecimal(0);
+			BigDecimal qAff = new BigDecimal(0);
+			BigDecimal qProg = new BigDecimal(0);
+			
+			//calcolo degli incentivi
+			if (p.getRicompreso() != null && p.getRicompreso().toString().equals("No"))
+			{
+				if (p.isFondoenable()) {
+					qInn = p.getQuotaInnovazioneTotale().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qExec = p.getGdl113Exec().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qAff = p.getGdl113Affida().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qProg = p.getGdl113Program().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isQuotainnovazioneenable() && !p.isFondoenable())
+		    	{
+		    		qInn = p.getQuotaInnovazioneTotale().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isQuotagdlenable() && !p.isFondoenable())
+		    	{
+		    		qExec = p.getGdl113Exec().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qAff = p.getGdl113Affida().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+					qProg = p.getGdl113Program().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isProgramenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qProg = p.getGdl113Program().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isAffidaenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qAff = p.getGdl113Affida().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+		    	if (p.isExecenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qExec = p.getGdl113Exec().setScale(2, BigDecimal.ROUND_HALF_DOWN);
+		    	}
+			}
+			
+			BigDecimal vinA1 = new BigDecimal(0);
+			BigDecimal vinA2 = new BigDecimal(0);
+			BigDecimal vinA3 = new BigDecimal(0);
+			
+			BigDecimal mutA1 = new BigDecimal(0);
+			BigDecimal mutA2 = new BigDecimal(0);
+			BigDecimal mutA3 = new BigDecimal(0);
+			
+			BigDecimal capA1 = new BigDecimal(0);
+			BigDecimal capA2 = new BigDecimal(0);
+			BigDecimal capA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1 = new BigDecimal(0);
+			BigDecimal bilA2 = new BigDecimal(0);
+			BigDecimal bilA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1s = new BigDecimal(0);
+			BigDecimal bilA2s = new BigDecimal(0);
+			BigDecimal bilA3s = new BigDecimal(0);
+			
+			BigDecimal bilA1n = new BigDecimal(0);
+			BigDecimal bilA2n = new BigDecimal(0);
+			BigDecimal bilA3n = new BigDecimal(0);
+			
+			BigDecimal finA1 = new BigDecimal(0);
+			BigDecimal finA2 = new BigDecimal(0);
+			BigDecimal finA3 = new BigDecimal(0);
+			
+			BigDecimal traA1 = new BigDecimal(0);
+			BigDecimal traA2 = new BigDecimal(0);
+			BigDecimal traA3 = new BigDecimal(0);
+			
+			BigDecimal altA1 = new BigDecimal(0);
+			BigDecimal altA2 = new BigDecimal(0);
+			BigDecimal altA3 = new BigDecimal(0);
+			
+			BigDecimal ivaA1 = new BigDecimal(0);
+			BigDecimal ivaA2 = new BigDecimal(0);
+			BigDecimal ivaA3 = new BigDecimal(0);
+			
+			boolean coperturafinaziaria = true;
+			String caratterizzazioneCapitaliPrivati = "";
+			
+			for (QuadroEconomicoDefinitivo q: p.getQuadroeconomico())
+	        {					
+				BigDecimal percentageA3 = new BigDecimal(100).subtract(q.getPercentualeA1().add(q.getPercentualeA2()));
+				
+				if (q.getImportoiva() != null && q.getImportoiva().compareTo(new BigDecimal(0)) != 0)
+				{
+					if (q.getPercentualeA1().compareTo(new BigDecimal(0)) != 0) 
+						ivaA1 = ivaA1.add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)));
+					if (q.getPercentualeA2().compareTo(new BigDecimal(0)) != 0) 
+						ivaA2 =	ivaA2.add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100)));
+					if (percentageA3.compareTo(new BigDecimal(0)) != 0) 
+						ivaA3 = ivaA3.add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100)));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("VIN"))
+				{
+					vinA1 = vinA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					vinA2 = vinA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					vinA3 = vinA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("MUT"))
+				{
+					mutA1 = mutA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					mutA2 = mutA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					mutA3 = mutA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("CAP"))
+				{
+					caratterizzazioneCapitaliPrivati = q.getCaratterizzazioneCopertura().getNome();
+					capA1 = capA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					capA2 = capA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					capA3 = capA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("BIL"))
+				{
+					bilA1 = bilA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					bilA2 = bilA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					bilA3 = bilA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					
+					if (q.getCaratterizzazioneCopertura().getNome().equals("stanziato"))
+					{
+						bilA1s = bilA1s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2s = bilA2s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3s = bilA3s.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+					else if (q.getCaratterizzazioneCopertura().getNome().equals("anni successivi"))
+					{
+						coperturafinaziaria = false;
+						bilA1n = bilA1n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2n = bilA2n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3n = bilA3n.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("FIN"))
+				{
+					finA1 = finA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					finA2 = finA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					finA3 = finA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("TRA"))
+				{
+					traA1 = traA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					traA2 = traA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					traA3 = traA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("ALT"))
+				{
+					altA1 = altA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					altA2 = altA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					altA3 = altA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+	        }     
+			
+			a.setRisorseVincolatePerLegge1(vinA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseVincolatePerLegge2(vinA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseVincolatePerLeggeSucc(vinA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseMutuo1(mutA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseMutuo2(mutA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseMutuoSucc(mutA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorsePrivati1(capA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorsePrivati2(capA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorsePrivatiSucc(capA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseBilancio1(bilA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).add(qInn).add(qAff).add(qProg).toString());
+			a.setRisorseBilancio2(bilA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseBilancioSucc(bilA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).add(qExec).toString());
+			a.setRisorseArt3_1(finA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseArt3_2(finA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseArt3_Succ(finA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseImmobili1(traA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseImmobili2(traA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseImmobiliSucc(traA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseAltro1(altA1.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseAltro2(altA2.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRisorseAltroSucc(altA3.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			if (p.getCostipregressi() != null)
+				a.setSpeseSostenute(p.getCostipregressi().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			
+			if (!caratterizzazioneCapitaliPrivati.isEmpty())
+			{
+				switch (caratterizzazioneCapitaliPrivati)
+				{
+					case "altro":
+						a.setTipologiaCapitalePrivato("9");
+						break;
+					case "finanza di progetto":
+						a.setTipologiaCapitalePrivato("1");
+						break;
+					case "concessione di costruzione e gestione":
+						a.setTipologiaCapitalePrivato("2");
+						break;
+					case "sponsorizzazione":
+						a.setTipologiaCapitalePrivato("3");
+						break;
+					case "società partecipate o di scopo":
+						a.setTipologiaCapitalePrivato("4");
+						break;
+					case "locazione finanziaria":
+						a.setTipologiaCapitalePrivato("5");
+						break;
+					case "contratto di disponibilità":
+						a.setTipologiaCapitalePrivato("6");
+						break;
+				}
+			}
+			
+			a.setMeseAvvioProcedura(Integer.toString(calendar.get(Calendar.MONTH) + 1));
+			
+			if (p.getAusa().getDenominazione().contains("CONSIP"))
+			{
+				a.setDelega("1");
+				a.setCodiceSoggettoDelegato(p.getAusa().getCodice());
+				a.setNomeSoggettoDelegato(p.getAusa().getDenominazione());
+			}
+			else
+				a.setDelega("2");
+			
+			//a.setVariato("");
+			
+			a.setNote(p.getNote());
+			
+			//a.setImportoRisorseFinanziarie("0.00");
+			//a.setImportoRisorseFinanziarieRegionali("0.00");
+			//a.setImportoRisorseFinanziarieAltro("0.00");
+			/*
+			a.setDirezioneGenerale("");
+			a.setStrutturaOperativa("");
+			a.setReferenteDati("");
+			a.setDirigenteResponsabile("");
+			a.setProceduraAffidamento("1");
+			*/
+			if (p.getVerdi() && p.getOggettoAcquistiVerdi() != null && !p.getOggettoAcquistiVerdi().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()) == p.getCostoTotale())
+					a.setAcquistoVerdi("2");
+				else
+					a.setAcquistoVerdi("3");
+				a.setNormativaRiferimento(p.getRiferimentoNormativoVerdi());
+				a.setOggettoVerdi(p.getOggettoAcquistiVerdi());
+				a.setCpvVerdi(p.getCpvAcquistiVerdi());
+				a.setImportoNettoIvaVerdi(p.getImportoNettoAcquistiVerdi().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoIvaVerdi(p.getAliquotaIvaAcquistiVerdi().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoTotVerdi(p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()).setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			}
+			else
+				a.setAcquistoVerdi("1");
+			if (p.getOggettoAcquistiMaterialiRiciclati() != null && !p.getOggettoAcquistiMaterialiRiciclati().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()) == p.getCostoTotale())
+					a.setAcquistoMaterialiRiciclati("2");
+				else
+					a.setAcquistoMaterialiRiciclati("3");
+				a.setOggettoMatRic(p.getOggettoAcquistiMaterialiRiciclati());
+				a.setCpvMatRic(p.getCpvAcquistiMaterialiRiciclati());
+				a.setImportoNettoIvaMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoIvaMatRic(p.getAliquotaIvaAcquistiMaterialiRiciclati().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+				a.setImportoTotMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()).setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			}
+			else
+				a.setAcquistoMaterialiRiciclati("1");
+			
+			/*
+			a.setImportoIva1(ivaA1.toString());
+			a.setImportoIva2(ivaA2.toString());
+			a.setImportoIvaSucc(ivaA3.toString());
+			*/
+			
+			if (coperturafinaziaria)
+				a.setCoperturaFinanziaria("1");
+			else 
+				a.setCoperturaFinanziaria("2");
+			a.setValutazione("1");
+			a.setImportoTotale(p.getTotaleCoperture().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			a.setRup(mapperRup(p.getDipendenti()));
+			acquisti.add(a);
+		}
+		
+		return acquisti;
+	}
+
+	private ArrayList<AcquistiNonRiproposti> mapperAcquistiNonRiproposti(List<ProcedureDefinitive> proceduredefinitive) {
+		ArrayList<AcquistiNonRiproposti> acquisti = new ArrayList<AcquistiNonRiproposti>();
+		
+		for (ProcedureDefinitive p: proceduredefinitive) {
+			AcquistiNonRiproposti a = new AcquistiNonRiproposti();
+			a.setCui(p.getCui());
+			if (p.getCup() != null && !p.getCup().isEmpty())
+			a.setCup(p.getCup());
+			a.setDescrizione(p.getDescrizione());
+			a.setImporto(p.getTotaleCoperture().setScale(2, BigDecimal.ROUND_HALF_DOWN).toString());
+			switch (p.getPriorita().toString()) {
+				case "max":
+					a.setPriorita("1");
+					break;
+				case "media":
+					a.setPriorita("2");
+				case "min":
+					a.setPriorita("3");
+				default:
+					break;
+			}
+			a.setMotivo(p.getNotenonriproposta());	
+			acquisti.add(a);
+		}
+		return acquisti;
+	}
+	
+	private Rup mapperRup(Dipendenti d) {
+		Rup rup = new Rup();
+		rup.setCognome(d.getCognome());
+		rup.setNome(d.getNome());
+		rup.setCfPiva(d.getCf());
+		return rup;
+	}
+}

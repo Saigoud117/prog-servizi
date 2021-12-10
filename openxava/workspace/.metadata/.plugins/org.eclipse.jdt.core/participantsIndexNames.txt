@@ -1,0 +1,99 @@
+INDEX VERSION 1.131
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1184584308.index
+\MySchool\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2349659861.index
+\Addons\xava
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1477995718.index
+\GestionaleAsd\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2807330072.index
+\Addons\xava
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2124929621.index
+\GestionaleAsd\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3494041344.index
+\ProgrammaBiennale\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2587843751.index
+\GestionaleAsd\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\981887266.index
+\OpenXava\xava
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1286912265.index
+\OpenXava\xava
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1045019538.index
+\ProgrammaBiennale\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3142713200.index
+\InvoiceDemo\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\57547743.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3171355747.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1873832707.index
+\ProgrammaBiennale\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3075362957.index
+\InvoiceDemo\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2464513525.index
+\ProgrammaBiennale2020\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2613704291.index
+\GestionaleAsd\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1844913587.index
+\ProgrammaBiennale2020\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3283627035.index
+\InvoiceDemo\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3069133906.index
+\InvoiceDemo\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2771413847.index
+\ProgrammaBiennale2020\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1012718085.index
+\MySchool\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3937583833.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\4181965158.index
+\ProgrammaBiennale2020\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2858231103.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\235681206.index
+\Addons\xava
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1896268447.index
+\ProgrammaBiennale\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2816742125.index
+\ProgrammaBiennale2020\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1032839028.index
+\MySchool\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1910436770.index
+\GestionaleAsd\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\854056864.index
+\ProgrammaBiennale\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\820601810.index
+\MySchool\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3625336743.index
+\GestionaleAsd\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2457816466.index
+\MySchool\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3005249379.index
+\ProgrammaBiennale\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1219357583.index
+\Addons\xava
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1339329660.index
+\ProgrammaBiennale2020\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\907917558.index
+\ProgrammaBiennale\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2405918547.index
+\InvoiceDemo\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3044338390.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\499832690.index
+\ProgrammaBiennale2020\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2427646780.index
+\GestionaleAsd\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3186653659.index
+\CohesionServlet\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2775796716.index
+\InvoiceDemo\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3900811577.index
+\Addons\xava
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\84621960.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3374850707.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2353216664.index
+\OpenXavaTest\src
+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\158839818.index
+\MySchool\src

@@ -1,0 +1,100 @@
+/* css Marco Aureli */
+#logo_welcome{
+	width: 100%;
+	max-width: 400px;
+}
+
+.welcome-button {
+
+    background: #00A14D !important;
+    border-color: #007D3C !important;
+    color: white !important;
+    box-shadow: 0px 1px 3px green !important;
+    -moz-box-shadow: 0px 1px 3px green !important;
+    -webkit-box-shadow: 0px 1px 3px green !important;
+}
+
+.welcome-link {
+    background: #00A14D !important;
+    border-color: #007D3C !important;
+    color: white !important;
+    box-shadow: 0px 1px 3px green !important;
+    -moz-box-shadow: 0px 1px 3px green !important;
+    -webkit-box-shadow: 0px 1px 3px green !important;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 39px;
+    text-decoration: none !important;
+    width: 240px;
+}
+
+#company_info {
+	width: 100%;
+    height: 115px;
+}
+
+#logo {
+	width: 250px;
+	float: left;
+}
+
+#title_container {
+    /* display: inline-block; */
+    /* line-height: 110px; */
+    font-size: 20px;
+    /* width: 70%; */
+    padding-top: 40px;
+}
+
+#welcome h1, #welcome p {
+	color: #000;
+}
+/* -- -- -- */ 
+
+.ox-layout-detail {
+	display: table;
+	white-space: nowrap; 
+}
+
+.ox-layout-aligned-cell {
+	display: table-cell;
+}
+
+.ox-layout-not-aligned-cell {
+	display: inline-block;	
+}
+
+.ox-layout-new-line {
+	display: table-column-group;
+}
+
+.ox-layout-descriptions-editor-handler { 
+	display: inline-block;
+} 
+
+.ox-flow-layout {
+	width: 100%;
+	display: inline-flex;
+	flex-wrap: wrap;
+}
+
+.ox-flow-layout > div {
+	min-width: 340px;
+}
+
+.ox-simple-layout.ox-flow-layout > div { 
+	min-width: 100%;
+}
+
+.ox-flow-layout > div.ox-frame {
+	width: 100%;  
+	margin-bottom: 10px;
+}
+
+.ox-flow-layout .ox-layout-new-line {
+	display: none;
+}
+
+.ox-flow-layout .ox-layout-aligned-cell {
+	display: inline-block;
+}

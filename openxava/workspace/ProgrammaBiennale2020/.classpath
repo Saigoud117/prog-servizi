@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="properties"/>
+	<classpathentry kind="src" path="/OpenXava"/>
+	<classpathentry kind="src" path="persistence"/>
+	<classpathentry kind="src" path="xava"/>
+	<classpathentry kind="src" path="i18n"/>
+	<classpathentry kind="lib" path="/OpenXava/lib/hsqldb.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.tomcat.runtimeTarget/Apache Tomcat v7.0 (3)">
+		<attributes>
+			<attribute name="owner.project.facets" value="jst.web"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.8.0_211">
+		<attributes>
+			<attribute name="owner.project.facets" value="java"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/annotations-13.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/kotlin-stdlib-1.3.70.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/kotlin-stdlib-common-1.3.70.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/converter-jackson-2.7.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/okhttp-3.14.7.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/okio-2.4.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/retrofit-2.7.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/jackson-annotations-2.9.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/jackson-core-2.9.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/jackson-databind-2.9.10.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ciacs/Documents/Marco Aureli/e-lios/OpenXAVA/openxava-5.9.1/workspace/ProgrammaBiennale2020/web/WEB-INF/lib/logging-interceptor-4.4.0.jar"/>
+	<classpathentry kind="output" path="web/WEB-INF/classes"/>
+</classpath>

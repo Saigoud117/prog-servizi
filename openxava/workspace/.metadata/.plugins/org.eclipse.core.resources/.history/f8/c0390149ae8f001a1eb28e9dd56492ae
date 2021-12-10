@@ -1,0 +1,64 @@
+package util;
+
+import java.util.*;
+
+import org.openxava.jpa.*;
+import org.openxava.util.*;
+
+import com.openxava.naviox.model.*;
+
+import ProgBien.*;
+
+public class ProgBienUtils {
+	
+	public static String CodiceInterno(String codiceInterno) {
+		int codiceInternoLenght = codiceInterno.length();
+		
+		for (int i = 0; i < 5-codiceInternoLenght; i++) {
+			codiceInterno = "0" + codiceInterno;
+		}
+		
+		return codiceInterno;
+	}
+	
+	public static boolean ControllaFase(int anno, Date data, String fase) {
+		boolean ok = false;
+		User user = User.find(Users.getCurrent());
+		if (!user.hasRole("admin"))
+		{
+			if (fase.equals("A")) {
+				Cronoprogramma c = (Cronoprogramma)XPersistence.getManager()
+					    .createQuery(
+					        "from Cronoprogramma c where c.anno = :anno and c.datainiziofasea <= :data and c.datafinefasea >= :data")  // JPQL query
+					    .setParameter("anno", anno)
+					    .setParameter("data", data)
+					    .getSingleResult();
+				if(c == null)
+					ok = false;
+			}
+			else if (fase.equals("B")) {
+				Cronoprogramma c = (Cronoprogramma)XPersistence.getManager()
+					    .createQuery(
+					        "from Cronoprogramma c where c.anno = :anno and c.datainiziofaseb <= :data and c.datafinefaseb >= :data")  // JPQL query
+					    .setParameter("anno", anno)
+					    .setParameter("data", data)
+					    .getSingleResult();
+				if(c == null)
+					ok = false;
+			}
+			else if (fase.equals("C")) {
+				Cronoprogramma c = (Cronoprogramma)XPersistence.getManager()
+					    .createQuery(
+					        "from Cronoprogramma c where c.anno = :anno and c.datainiziofasec <= :data and c.datafinefasec >= :data")  // JPQL query
+					    .setParameter("anno", anno)
+					    .setParameter("data", data)
+					    .getSingleResult();
+				if(c == null)
+					ok = false;
+			}
+			else
+				ok = false;
+		}
+		return ok;
+	}
+}

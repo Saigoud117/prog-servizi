@@ -1,0 +1,7 @@
+INDEX VERSION 1.4+C:\Users\ciacs\Documents\Marco Aureli\e-lios\OpenXAVA\openxava-5.9.1\workspace\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
+1928055436.index
+2916396258.index
+2738455591.index
+2330450223.index
+3823810066.index
+3400492575.index

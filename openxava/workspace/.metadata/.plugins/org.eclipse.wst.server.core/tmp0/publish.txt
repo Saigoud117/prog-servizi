@@ -1,0 +1,4 @@
+#Tomcat publish data
+#Fri Nov 05 15:51:18 CET 2021
+org.eclipse.jst.j2ee.server\:Addons=WEB-INF/lib/Addons.jar
+org.eclipse.jst.j2ee.server\:OpenXava=WEB-INF/lib/OpenXava.jar

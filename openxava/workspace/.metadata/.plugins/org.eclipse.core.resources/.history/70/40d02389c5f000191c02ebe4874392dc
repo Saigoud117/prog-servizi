@@ -1,0 +1,109 @@
+package actions;
+
+import java.math.*;
+import java.util.*;
+
+import javax.persistence.*;
+
+import org.apache.commons.beanutils.*;
+import org.openxava.actions.*;
+import org.openxava.jpa.*;
+
+import ProgBien.*;
+
+public class CreateAggregazioneProcedureProgrammaAction extends ViewBaseAction {
+	public void execute() throws Exception { 
+		
+		String cui = getView().getValueString("cui"); 
+		        
+        AccorpamentoProcedure ent = (AccorpamentoProcedure)getPreviousView().getEntity();
+        EntityManager em = XPersistence.getManager();   
+        ent = em.merge(ent);
+        
+        Procedure mainProc = new Procedure();
+        
+        BigDecimal costia1tot = new BigDecimal(0);
+		BigDecimal costia2tot = new BigDecimal(0);
+		BigDecimal costiastot = new BigDecimal(0);
+        for(AccorpamentoProcedureDettaglio d: ent.getAccorpamentoProcedureDettaglio()) {
+        	if (d.isPrincipale()) {
+        		mainProc = d.getProcedure();
+        	}           	       
+        	
+        	if(d.getProcedure().getCostia1() != null)
+        		costia1tot = costia1tot.add(d.getProcedure().getCostia1());
+        	if(d.getProcedure().getCostia2() !=null)
+        		costia2tot = costia2tot.add(d.getProcedure().getCostia2());
+        	if(d.getProcedure().getCostias() != null)
+        		costiastot = costiastot.add(d.getProcedure().getCostias());
+        	
+        }
+
+        ProcedureProgramma copyProc = new ProcedureProgramma();
+        
+        BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);
+
+        BeanUtils.copyProperties(copyProc, mainProc);
+        
+        copyProc.setCui(cui);
+        
+        copyProc.setCostia1(costia1tot);
+        copyProc.setCostia2(costia2tot);
+        copyProc.setCostias(costiastot);        
+        
+        copyProc.setDescrizione(ent.getDescrizione());;
+        
+        copyProc.setCoperture(new ArrayList<CopertureProgramma>());
+        copyProc.setQuadroeconomico(new ArrayList<QuadroEconomicoProgramma>());
+        
+        em.persist(copyProc);
+        
+        for(AccorpamentoProcedureDettaglio d: ent.getAccorpamentoProcedureDettaglio()) {
+    		for (QuadroEconomico q: d.getProcedure().getQuadroeconomico())
+    		{
+    			QuadroEconomicoProgramma qCopy = new QuadroEconomicoProgramma();
+                qCopy.setAliquotaiva(q.getAliquotaiva());
+                qCopy.setAmount(q.getAmount());
+                qCopy.setBase(q.getBase());
+                qCopy.setCapitolo(q.getCapitolo());
+                qCopy.setDescrizionevoce(q.getDescrizionevoce());
+                qCopy.setImportoiva(q.getImportoiva());
+                qCopy.setImportonetto(q.getImportonetto());
+                qCopy.setPdc(q.getPdc());
+                qCopy.setTipologia(q.getTipologia());            
+                qCopy.setProcedura(copyProc);
+                qCopy.setOid(null);
+                XPersistence.getManager().persist(qCopy);
+    		}
+        }
+        
+        for(AccorpamentoProcedureDettaglio d: ent.getAccorpamentoProcedureDettaglio()) {
+    		for (Coperture c: d.getProcedure().getCoperture())
+    		{
+    			CopertureProgramma cCopy = new CopertureProgramma();
+            	cCopy.setAltro(c.getAltro());
+            	cCopy.setAnno(c.getAnno());
+            	cCopy.setBilancio(c.getBilancio());
+            	cCopy.setMutuo(c.getMutuo());
+            	cCopy.setPatrimonio(c.getPatrimonio());
+            	cCopy.setPrivati(c.getPrivati());
+            	cCopy.setStima(c.getStima());
+            	cCopy.setTotale(c.getTotale());
+            	cCopy.setTrasfimmo(c.getTrasfimmo());
+            	cCopy.setVincolate(c.getVincolate());
+            	cCopy.setProcedura(copyProc);
+                cCopy.setOid(null);
+                XPersistence.getManager().persist(cCopy);
+    		}
+        }
+        
+        XPersistence.commit();     
+
+        getPreviousView().setEditable(true);    
+        getPreviousView().setKeyEditable(false);                  
+        addMessage("Aggregation.Success");
+ 
+        closeDialog();  
+        
+	}
+}

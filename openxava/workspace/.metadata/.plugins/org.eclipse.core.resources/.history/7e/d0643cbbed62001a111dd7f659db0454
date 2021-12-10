@@ -1,0 +1,42 @@
+package actions;
+
+import java.math.*;
+import java.text.*;
+import java.util.*;
+
+import javax.persistence.*;
+
+import org.openxava.actions.*;
+import org.openxava.jpa.*;
+import org.openxava.model.*;
+import org.openxava.util.*;
+
+import ProgBien.*;
+import util.*;
+
+public class ChangeDescrizioneAction extends OnChangePropertyBaseAction {
+	public void execute() throws Exception {
+		
+		if (getNewValue() == null) return;
+		
+		Pubblicazione ent = (Pubblicazione)getView().getEntity();
+		
+		boolean update = (boolean)getNewValue();
+		if (update) {
+			String descr = ProgrammaBiennalePreferences.getDefaultDescrizionePubblicazioneAggiornamento();
+			int year = Calendar.getInstance().get(Calendar.YEAR);
+			String date = String.valueOf(year).concat("/").concat(String.valueOf(year + 1));
+			DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+			Date now = new Date();
+			ent.setDescrizione(descr.replace("~REPLACE~", date).replace("~REPLACE-DATE~", formatter.format(now)));
+		}
+		else
+		{
+			String descr = ProgrammaBiennalePreferences.getDefaultDescrizionePubblicazione();
+			int year = Calendar.getInstance().get(Calendar.YEAR);
+			String date = String.valueOf(year).concat("/").concat(String.valueOf(year + 1));
+			descr.replace("~REPLACE~", date);
+			ent.setDescrizione(descr.replace("~REPLACE~", date));
+		}
+	}
+}

@@ -1,0 +1,29 @@
+package actions;
+
+import org.openxava.actions.*;
+
+import ProgBien.*;
+
+public class ResetProfilo extends ViewBaseAction {
+	
+	//@Inject @Named("profile")
+    private Inquadrato profile;
+	
+    @Override
+    public void execute() throws Exception {
+    	
+    	profile = null;
+    	getView().setValue("inquadrato", profile);
+    	getView().reset();
+    	addMessage("Profilo correttamente reimpostato");
+    }
+
+	public Inquadrato getProfile() {
+		return profile;
+	}
+
+	public void setProfile(Inquadrato profile) {
+		this.profile = profile;
+	}
+	
+}

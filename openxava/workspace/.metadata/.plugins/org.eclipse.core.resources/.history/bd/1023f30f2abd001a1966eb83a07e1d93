@@ -1,0 +1,189 @@
+package util;
+
+import java.math.*;
+import java.util.*;
+
+import org.openxava.jpa.*;
+import org.openxava.model.meta.*;
+import org.openxava.util.*;
+
+import com.openxava.naviox.model.*;
+
+import ProgBien.*;
+
+public class ProgBienUtils {
+	
+	public static String CodiceInterno(String codiceInterno) {
+		int codiceInternoLenght = codiceInterno.length();
+		
+		for (int i = 0; i < 5-codiceInternoLenght; i++) {
+			codiceInterno = "0" + codiceInterno;
+		}
+		
+		return codiceInterno;
+	}
+	
+	public static boolean checkAdmin() {
+		User user = User.find(Users.getCurrent());
+		return user.hasRole("admin");
+	}
+	
+	public static int getSerialeFromCui(String cui) {
+		String c = cui.substring(16).replaceFirst("^0+(?!$)", "");
+		return Integer.parseInt(c);
+	}
+	
+	public static List<Dipendenti> getNotificationUsersByType(String tipo){
+		TicketConfigurazioneNotifiche TicketConfigurazioneNotifiche = (TicketConfigurazioneNotifiche)XPersistence.getManager()
+				    .createQuery(
+				        "from TicketConfigurazioneNotifiche t where t.tipo.descrizione like :descrizione")  // JPQL query
+				    .setParameter("tipo", tipo)
+				    .getSingleResult();
+		
+		List<Dipendenti> utenti = new ArrayList<Dipendenti>();
+		
+		for (TicketConfigurazioneNotificheDettaglio d: TicketConfigurazioneNotifiche.getTicketConfigurazioneNotificheDettaglio()) {
+			utenti.add(d.getUtente());
+		}
+		
+		return utenti;
+	}
+	
+	public static BigDecimal getSogliaImporti(Date data) {
+		 // An example of using JDBC
+		 java.sql.Connection con = null;
+		 try {
+			 con = DataSourceConnectionProvider.getByComponent("SogliaImporti").getConnection(); // 1
+			 String table = MetaModel.get("SogliaImporti").getMapping().getTable();
+			 java.sql.PreparedStatement ps = con.prepareStatement("select valore from " + table +
+			 " where datainizio <= ? and datafine >= ?");
+			 ps.setDate(1, new java.sql.Date(data.getTime()));
+			 ps.setDate(2, new java.sql.Date(data.getTime()));
+			 java.sql.ResultSet rs = ps.executeQuery();
+			 rs.next();
+			 BigDecimal result = rs.getBigDecimal(1);
+			 ps.close();
+			 return result;
+		 }
+		 catch (Exception ex) {
+			 // You can throw any runtime exception here
+			 throw new SystemException(ex);
+		 }
+		 finally {
+			 try {
+				 con.close();
+			 }
+			 catch (Exception ex) {
+				 
+			 }
+		 }
+	}
+	
+	public static boolean checkTicketConfigurazione(TipologiaTicket tipo) {
+		boolean trovato = false;
+		try {
+			TicketConfigurazioneNotifiche t = (TicketConfigurazioneNotifiche)XPersistence.getManager()
+				    .createQuery(
+				        "from TicketConfigurazioneNotifiche t where t.tipo.oid = :tipo")  // JPQL query
+				    .setParameter("tipo", tipo.getOid())
+				    .getSingleResult();
+			if(t != null)
+				trovato = true;
+		} catch (Exception ex) {
+			trovato = false;
+		}
+		return trovato;
+	}
+	
+	public static int getCronoprogramma(int anno, Date data, String fase) {
+		 // An example of using JDBC
+		 java.sql.Connection con = null;
+		 try {
+			 con = DataSourceConnectionProvider.getByComponent("Cronoprogramma").getConnection(); // 1
+			 String table = MetaModel.get("Cronoprogramma").getMapping().getTable();
+			 
+			 String inizio = "datainiziofase".concat(fase.toLowerCase());
+			 String fine = "datafinefase".concat(fase.toLowerCase());
+			 
+			 java.sql.PreparedStatement ps = con.prepareStatement("select count(*) from " + table +
+			 " where anno = ? and " + inizio + " <= ? and " + fine + " >= ?");
+			 ps.setInt(1, anno);
+			 ps.setDate(2, new java.sql.Date(data.getTime()));
+			 ps.setDate(3, new java.sql.Date(data.getTime()));
+			 java.sql.ResultSet rs = ps.executeQuery();
+			 rs.next();
+			 int result = rs.getInt(1);
+			 ps.close();
+			 return result;
+		 }
+		 catch (Exception ex) {
+			 // You can throw any runtime exception here
+			 throw new SystemException(ex);
+		 }
+		 finally {
+			 try {
+				 con.close();
+			 }
+			 catch (Exception ex) {
+				 
+			 }
+		 }
+	}
+	
+	public static boolean getCronoprogrammaFaseStraordinaria(int anno, Date data, String cfRup) {
+		boolean trovato = false;
+		boolean listaRup = false;
+		boolean hasRup = false;
+		boolean ok = false;
+		try {
+			Cronoprogramma c = (Cronoprogramma)XPersistence.getManager()
+				    .createQuery(
+				        "from Cronoprograma c where c.anno = :anno and c.dataInizioFaseStraordinaria <= :data and c.dataFineFaseStraordinaria >= :data")  // JPQL query
+				    .setParameter("anno", anno)
+				    .setParameter("data", new java.sql.Date(data.getTime()))
+				    .getSingleResult();
+			if (c != null)
+				trovato = true;
+			if (c != null && c.getListaRup().size() > 0)
+			{ 
+				listaRup = true;
+				for(CronoprogrammaDettaglioFaseStraodinaria d: c.getListaRup())
+		        {
+					if (d.getDipendenti().getCf().equals(cfRup))
+						hasRup = true;
+		        }
+			}
+			
+			if (trovato && !listaRup)
+				ok = true;
+			else if (trovato && listaRup && hasRup)
+				ok = true;
+				
+		} catch (Exception ex) {
+			ok = false;
+		}
+		return ok;
+	}
+	
+	public static boolean ControllaFase(int anno, Date data, String fase) {	
+		boolean ok = true;
+		
+		if (!checkAdmin() && getCronoprogramma(anno, data, fase) == 0)
+		{
+			ok = false;
+		}
+		return ok;
+	}
+	
+	public static boolean ControllaFaseStraordinaria(int anno, Date data, String username) {	
+		boolean ok = true;
+		
+		if (!checkAdmin() && !getCronoprogrammaFaseStraordinaria(anno, data, username))
+		{
+			ok = false;
+		}
+		return ok;
+	}
+	
+	
+}

@@ -1,0 +1,416 @@
+<?xml version = "1.0" encoding = "ISO-8859-1"?>
+
+<!DOCTYPE controllers SYSTEM "dtds/controllers.dtd">
+
+<controllers>
+
+	<object name="ProgBien_profile" class="ProgBien.Inquadrato" scope="global"/>
+	
+	<object name="ProgBien_quadroeconomico" class="java.util.List" scope="global"/>
+	
+	<object name="ProgBien_quadroeconomicoprogramma" class="java.util.List" scope="global"/>
+ 
+    <!-- Environment variable:
+    <env-var name="ProgrammaBiennale2020_DEFAULT_YEAR" value="2015"/> 
+    -->
+    
+    <!-- Session object:
+    <object name="ProgrammaBiennale2020_activeYear" class="java.lang.Integer" value="2015" 
+    	    scope="global"/>    
+    -->
+    
+    <!-- Controller:
+    <controller name="Teacher">
+    	<extends controller="Typical"/>
+    	<action name="new" icon="library-plus" keystroke="Control N"
+        	class="actions.CreateTeacher">
+    	</action>
+	</controller>    
+    -->
+    
+    <controller name="RichiestaAbilitazione">
+    	<extends controller="Typical"/>
+    	<action name="abilita" 
+		class="actions.AbilitaUtenteAction" 
+		mode="detail" />
+    </controller>
+    
+    <controller name="Dashboard">
+		<action name="initDashboard" 
+		class="actions.InitDashboardAction" 
+		on-init="true" 
+		hidden="true">
+			<use-object name="ProgBien_profile"/>
+		</action>
+		<!-- 
+		<action name="impostaProfilo" 
+		class="actions.ImpostaProfilo" 
+		mode="detail">
+			<use-object name="ProgBien_profile"/>
+		</action>
+		 -->
+		 <action name="impostaProfilo" 
+		class="actions.ImpostaProfilo" 
+		mode="detail" />
+		<action name="resetProfilo" 
+		class="actions.ResetProfilo" 
+		mode="detail">
+			<use-object name="ProgBien_profile"/>
+		</action>
+	</controller>
+	
+	<controller name="ChangeProfile">
+	    <action name="save" 
+		class="actions.ImpostaProfiloAction">
+			<use-object name="ProgBien_profile"/>
+		</action>
+	</controller>
+    
+    <controller name ="AccorpamentoProcedure">
+   		<extends controller="Typical"/>
+   		<action name="confirmProcedureInProgram" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.CreateAggregazioneProcedureAction" />
+        <action name="disaggrega" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.DisaggregazioneProcedureAction" />
+    </controller>
+    
+    <controller name ="AccorpamentoProcedureProgramma">
+   		<extends controller="Typical"/>
+   		<action name="confirmProcedureProgrammaInProgram" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.CreateAggregazioneProcedureProgrammaAction" />
+        <action name="disaggrega" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.DisaggregazioneProcedureProgrammaAction" />
+    </controller>
+    
+    <controller name ="TicketHelpDesk">
+   		<extends controller="Typical"/>
+   		<action name="initHelpDeskTicket"
+		class="actions.InitHelpDeskTicketAction" 
+		after-each-request="true"
+		mode="detail"
+		hidden="true" />
+   		<action name="chiudiTicket" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.SetTicketClosed" />
+           <action name="impostaInLavorazione" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.SetTicketInLavorazione" />
+           <action name="riapriTicket" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.SetTicketOpened" />
+    </controller>
+    
+    <controller name="ImpostaInLavorazione">
+	    <action name="save" 
+		class="actions.SetTicketInLavorazioneAction" />
+	</controller>
+	
+	<controller name="Procedure">
+		<extends controller="Typical"/>
+	    <action name="duplicate" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.DuplicateAction" />
+        <action name="duplicatePersist" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.DuplicatePersistAction" />
+        <action name="caricaProceduraDaProgrammaApprovato" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="true"
+            class="actions.CaricaProcedureDefinitive" />
+        <action name="delete" mode="detail" confirm="true"
+			class="actions.DeleteAction"
+			image="delete.gif"
+			icon="delete"
+			available-on-new="false"
+			keystroke="Control D"/>	 	             
+        <action name="searchExcludingDeleted"
+        	hidden="true"
+        	class="actions.SearchExcludingDeletedAction"/>           	     	       
+	   <action name="deleteSelected" mode="list" confirm="true"
+			process-selected-items="true"
+			image="delete.gif"
+			icon="delete"			 
+			class="actions.DeleteSelectedAction"
+			keystroke="Control D"/>
+					<action name="deleteRow" mode="NONE" confirm="true"
+			class="actions.DeleteSelectedAction"
+			image="delete.gif"
+			icon="delete"
+			in-each-row="true"/>
+			<!-- 
+		<action name="save" class="actions.UpdateCoperture" 
+			mode="detail" 
+			image="save.gif"
+	        icon="content-save" 
+	        keystroke="Control S" />	
+	        -->
+	    <action name="calcolaTotali" mode="list" confirm="true"
+	        class="actions.CalculateTotalsAction" />
+	    <action name="SincronizzaFaseA" mode="list" confirm="true"
+	        class="actions.SincronizzaFaseA" />
+        <action name="aggiornaAvviate" mode="list" confirm="true"
+	        class="actions.ImportAvviateAction" />
+	    <action name="aggiornaCoperture" hidden="true"
+	        class="actions.AggiornaCopertureAction" />
+	    <action name="addIncentivi" hidden="true"
+	        class="actions.AddIncentivi">
+	        	<use-object name="ProgBien_quadroeconomico"/>
+	        	<use-object name="ProgBien_quadroeconomicoprogramma"/>
+        	</action>
+	</controller>
+	
+	<controller name="AddIncentivi">
+	    <action name="save" 
+		class="actions.AddRowIncentiviAction">
+			<use-object name="ProgBien_quadroeconomico"/>
+		</action>
+	</controller>
+	
+	<controller name="AddIncentiviProgramma">
+	    <action name="save" 
+		class="actions.AddRowIncentiviProgrammaAction">
+			<use-object name="ProgBien_quadroeconomicoprogramma"/>
+		</action>
+	</controller>
+	
+	<controller name="GtGare">
+		<action name="search" hidden="true"
+		class="actions.RupSearchAction"
+		image="images/search.gif">
+		</action>
+	</controller>
+	
+	<controller name="ProcedureDefinitive">
+		<extends controller="Typical" />
+		<action name="calcolaTotali" mode="list" confirm="true"
+			class="actions.CalculateTotalsDefinitiveAction" />
+		<action name="searchExcludingDeleted" hidden="true"
+			class="actions.SearchExcludingDeletedAction" />
+		<action name="delete" mode="detail" confirm="true"
+			class="actions.DeleteAction" image="delete.gif" icon="delete"
+			available-on-new="false" keystroke="Control D" />
+		<action name="searchExcludingDeleted" hidden="true"
+			class="actions.SearchExcludingDeletedAction" />
+		<action name="deleteSelected" mode="list" confirm="true"
+			process-selected-items="true" image="delete.gif" icon="delete"
+			class="actions.DeleteSelectedAction" keystroke="Control D" />
+		<action name="deleteRow" mode="NONE" confirm="true"
+			class="actions.DeleteSelectedAction" image="delete.gif"
+			icon="delete" in-each-row="true" />
+		<action name="archiveSelected" mode="list" confirm="true"
+			process-selected-items="true" image="copy.gif" icon="content-copy"
+			class="actions.ArchiveSelected" />
+	</controller>
+
+	<controller name="ProcedureProgramma">
+		<extends controller="Typical"/>
+        <action name="validateProcedure" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.ValidateProcedureAction" />
+        <action name="searchExcludingDeleted"
+        	hidden="true"
+        	class="actions.SearchExcludingDeletedAction"/>   
+        <action name="delete" mode="detail" confirm="true"
+			class="actions.DeleteAction"
+			image="delete.gif"
+			icon="delete"
+			available-on-new="false"
+			keystroke="Control D"/>	 	             
+        <action name="searchExcludingDeleted"
+        	hidden="true"
+        	class="actions.SearchExcludingDeletedAction"/>           	     	       
+	   <action name="deleteSelected" mode="list" confirm="true"
+			process-selected-items="true"
+			image="delete.gif"
+			icon="delete"			 
+			class="actions.DeleteSelectedAction"
+			keystroke="Control D"/>						
+		<action name="deleteRow" mode="NONE" confirm="true"
+			class="actions.DeleteSelectedAction"
+			image="delete.gif"
+			icon="delete"
+			in-each-row="true"/>
+		<action name="caricaProceduraDaProgrammaApprovato" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="true"
+            class="actions.CaricaProcedureDefinitive" />
+        <action name="calcolaTotali" mode="list" confirm="true"
+	        class="actions.CalculateTotalsProgrammaAction" />
+        <action name="aggiornaCoperture" hidden="true"
+	        class="actions.AggiornaCopertureProgrammaAction" />
+	    <action name="addIncentivi" hidden="true"
+	        class="actions.AddIncentivi">
+	        	<use-object name="ProgBien_quadroeconomico"/>
+	        	<use-object name="ProgBien_quadroeconomicoprogramma"/>
+	        </action>
+    </controller>
+    
+    <controller name="CaricaProcedureFabbisogno">
+	    <action name="Carica" 
+		class="actions.CaricaProceduraDaProgrammaApprovatoAction" />
+	</controller>
+	
+	 <controller name="CaricaProcedureProgramma">
+	    <action name="Carica" 
+		class="actions.CaricaProceduraProgrammaDaProgrammaApprovatoAction" />
+	</controller>
+    
+    <controller name="QuadroEconomico">
+		<action name="save" class="actions.SaveQuadroEconomicoDetailAction" />	
+		<action name="remove" class="actions.RemoveQuadroEconomicoDetailAction" />	
+		<action name="add" class="actions.AddQuadroEconomicoDetailAction" />	
+		<action name="edit" class="actions.EditQuadroEconomicoDetailAction" />	
+   	</controller>
+   	
+   	<controller name="QuadroEconomicoProgramma">
+		<action name="save" class="actions.SaveQuadroEconomicoProgrammaDetailAction" />	
+		<action name="remove" class="actions.RemoveQuadroEconomicoProgrammaDetailAction" />	
+		<action name="add" class="actions.AddQuadroEconomicoProgrammaDetailAction" />	
+		<action name="edit" class="actions.EditQuadroEconomicoProgrammaDetailAction" />	
+   	</controller>
+   	
+   	<controller name="QuadroEconomicoDefinitivo">
+		<action name="save" class="actions.SaveQuadroEconomicoDefinitivoDetailAction" />	
+		<action name="remove" class="actions.RemoveQuadroEconomicoDefinitivoDetailAction" />	
+		<action name="add" class="actions.AddQuadroEconomicoDefinitivoDetailAction" />	
+		<action name="edit" class="actions.EditQuadroEconomicoDefinitivoDetailAction" />	
+   	</controller>
+    
+    <controller name="PersistProcedureValidateAction">
+    	<action name="add"
+        class="actions.PersistProcedureValidateAction"/>
+	</controller>
+	
+	<env-var
+        name="XAVA_SEARCH_ACTION"
+        value="ProgrammaBiennale.searchExcludingDeleted" />
+    
+    <controller name="Pubblicazione">
+		<extends controller="TypicalRealExcel"/>
+        <action name="excelExport" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.ExcelExport" />
+    	<action name="jsonExport" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.JsonExport" />
+        <action name="jsonExportProduzione" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.JsonExportProduzione" />
+        <action name="archiviaProcedure" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.ArchiveProcedureFabbisognoAction" />
+    </controller>
+	
+	<controller name="ProgrammaBiennale"> 
+	
+	    <extends controller="Typical"/>	 	    
+	        
+	    <action name="delete" mode="detail" confirm="true"
+			class="actions.DeleteAction"
+			image="delete.gif"
+			icon="delete"
+			available-on-new="false"
+			keystroke="Control D"/>	 
+	             
+        <action name="searchExcludingDeleted"
+        	hidden="true"
+        	class="actions.SearchExcludingDeletedAction"/>           	     
+	       
+	   <action name="deleteSelected" mode="list" confirm="true"
+			process-selected-items="true"
+			image="delete.gif"
+			icon="delete"			 
+			class="actions.DeleteSelectedAction"
+			keystroke="Control D"/>				
+		
+		<action name="deleteRow" mode="NONE" confirm="true"
+			class="actions.DeleteSelectedAction"
+			image="delete.gif"
+			icon="delete"
+			in-each-row="true"/>
+	           
+	</controller>
+	
+	<controller name="Trash">
+	    <action name="restore" mode="list"
+	        class="actions.DeleteSelectedAction">
+	        <set property="restore" value="true"/> <!-- Initialize the restore property to -->
+	                <!-- true before calling the execute() method of the action -->
+	    </action>
+	</controller>
+	
+	<controller name="GestioneReferenti">
+		<action name="Disabilita Utente" 
+			icon="delete"
+            image="delete.gif"
+			mode="detail" 
+            class="actions.DisabilitaUtenteAction" />
+        <action name="NuovaAbilitazione" 
+			mode="list" 
+			icon="library-plus"
+            image="new.gif"
+            class="actions.NuovaAbilitazione" />
+	</controller>
+	
+	<controller name="NuovoReferente">
+	    <action name="save" 
+		class="actions.NuovaAbilitazioneAction" />
+	</controller>
+	
+	<controller name="ChangeYear">
+    	<action name="add"
+        class="actions.ChangeYearAction"/>
+	</controller>
+	
+	<controller name="CreateProceduraProgrammaAction">
+    	<action name="add"
+        class="actions.CreateProceduraProgrammaAction"/>
+	</controller>
+	
+	<!--
+	<controller name="CreateAggregazioneProcedureProgrammaAction">
+    	<action name="add"
+        class="actions.CreateAggregazioneProcedureProgrammaAction"/>
+	</controller>
+	-->
+	
+	<controller name="RecuperaProceduraDefinitivaAction">
+    	<action name="add"
+        class="actions.RecuperaProceduraDefinitivaAction"/>
+	</controller>
+
+</controllers>

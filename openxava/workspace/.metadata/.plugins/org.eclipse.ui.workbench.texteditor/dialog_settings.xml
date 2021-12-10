@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item key="wholeword" value="false"/>
+		<item key="incremental" value="false"/>
+		<item key="isRegEx" value="false"/>
+		<item key="y" value="88"/>
+		<item key="selection" value=""/>
+		<item key="wrap" value="false"/>
+		<item key="casesensitive" value="false"/>
+		<item key="x" value="369"/>
+		<list key="findhistory">
+			<item value="note"/>
+			<item value="operation_not_allowed_abilitazione"/>
+			<item value="abilita"/>
+			<item value="totale iva"/>
+			<item value="gruppo"/>
+			<item value="separabile"/>
+			<item value="lotto"/>
+			<item value="Variante"/>
+			<item value="DescrizioneVariante"/>
+			<item value="descrizioneVariante"/>
+			<item value="Descrizione vari"/>
+			<item value="Descrizione"/>
+			<item value="variante"/>
+			<item value="prog"/>
+			<item value="choos"/>
+		</list>
+		<list key="replacehistory">
+			<item value=""/>
+			<item value=".setScale(2, BigDecimal.ROUND_HALF_DOWN)"/>
+			<item value=".setScale(2, )"/>
+			<item value="i"/>
+			<item value=","/>
+			<item value="&quot;2&quot;"/>
+			<item value="&quot;1&quot;"/>
+			<item value="String"/>
+			<item value="d"/>
+			<item value="percentageA3"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="1200"/>
+		<item key="DIALOG_Y_ORIGIN" value="337"/>
+		<item key="DIALOG_WIDTH" value="331"/>
+		<item key="DIALOG_HEIGHT" value="454"/>
+		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
+	</section>
+</section>

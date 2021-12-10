@@ -1,0 +1,7 @@
+0:0:0:0:0:0:0:1 - - [02/Oct/2020:11:41:24 +0200] "GET /ProgrammaBiennale2020/ HTTP/1.1" 200 1056
+0:0:0:0:0:0:0:1 - - [02/Oct/2020:11:41:24 +0200] "GET /ProgrammaBiennale2020/xava/style/terra.css?ox=6.1.2 HTTP/1.1" 200 72412
+0:0:0:0:0:0:0:1 - - [02/Oct/2020:11:41:24 +0200] "GET /ProgrammaBiennale2020/naviox/images/Regione_Marchebig.png HTTP/1.1" 200 133466
+0:0:0:0:0:0:0:1 - - [02/Oct/2020:11:41:24 +0200] "GET /ProgrammaBiennale2020/xava/fonts/roboto-regular-webfont.woff HTTP/1.1" 200 20924
+0:0:0:0:0:0:0:1 - - [02/Oct/2020:11:41:24 +0200] "GET /ProgrammaBiennale2020/naviox/images/favicon.ico HTTP/1.1" 200 1150
+192.168.2.142 - - [02/Oct/2020:14:47:19 +0200] "GET / HTTP/1.1" 404 951
+192.168.2.142 - - [02/Oct/2020:14:47:20 +0200] "GET /HNAP1/ HTTP/1.1" 404 963

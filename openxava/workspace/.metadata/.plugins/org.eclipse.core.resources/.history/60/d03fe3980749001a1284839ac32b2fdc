@@ -1,0 +1,29 @@
+/*
+package jersey;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+*/
+/**
+ * A RESTFul Web Service that provides Endeca Workbench(WebStudio)
+ * Authentication service to internal apps(such as Merchtools) through HTTP.
+ * 
+ * @author lzhoucs
+ * 
+ */
+/*
+@Path("service")
+public class WSAuthService {
+  /**
+	 * 
+	 * @return "true" for success, "false" otherwise
+	 */
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	public String sayPlainTextHello() {
+		return "Hello Jersey";
+	}
+}
+*/

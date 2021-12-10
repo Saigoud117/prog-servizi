@@ -1,0 +1,28 @@
+package actions;
+
+import java.util.*;
+
+import javax.persistence.*;
+
+import org.openxava.actions.*;
+import org.openxava.jpa.*;
+import org.openxava.model.*;
+
+import ProgBien.*;
+
+public class NuovaAbilitazione extends ViewBaseAction {
+	public void execute() throws Exception {
+		showDialog();
+        getView().setModelName("Inquadrato");
+        
+        Query query = XPersistence.getManager().createQuery("from CodiciIct c where c.gruppicodici = 'A' and c.key not in ('A01', 'A02')");
+        
+        @SuppressWarnings("unchecked")
+		List<CodiciIct> profili = (List<CodiciIct>)query.getResultList(); 
+        
+        Map<?,?> values = MapFacade.getKeyValues("CodiciIct", profili);
+        
+        getView().setValue("profilo", values);
+        setControllers("NuovoReferente", "Dialog");
+	}
+}

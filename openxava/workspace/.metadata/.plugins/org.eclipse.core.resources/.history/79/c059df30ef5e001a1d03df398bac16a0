@@ -1,0 +1,1242 @@
+package actions;
+
+import java.io.*;
+import java.math.*;
+import java.net.*;
+import java.security.cert.*;
+import java.util.*;
+
+import javax.net.ssl.*;
+
+import org.openxava.actions.*;
+import org.openxava.jpa.*;
+
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.*;
+
+import EsportazioneMitProg.*;
+import ProgBien.*;
+import util.*;
+
+public class JsonExport extends ViewBaseAction  {
+	public void execute() throws Exception {	
+		
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		
+		@SuppressWarnings("unchecked")
+		List<Procedure> ProcedureFabbisogno = (List<Procedure>)XPersistence.getManager()
+			    .createQuery(
+			        "from Procedure p where p.stato.key in ('M', 'N', 'Z') and p.deleted = false order by p.codiceinterno ASC")  // JPQL query
+			    .getResultList();
+		
+		@SuppressWarnings("unchecked")
+		List<ProcedureDefinitive> ProcedureConfermate = (List<ProcedureDefinitive>)XPersistence.getManager()
+			    .createQuery(
+			        "from ProcedureDefinitive p where p.stato.key = 'C' and p.deleted = false")  // JPQL query
+			    .getResultList();
+		
+		@SuppressWarnings("unchecked")
+		List<ProcedureDefinitive> ProcedureNonRiproposte = (List<ProcedureDefinitive>)XPersistence.getManager()
+			    .createQuery(
+			        "from ProcedureDefinitive p where p.stato.key = 'K' and p.deleted = false")  // JPQL query
+			    .getResultList();
+		
+		Referente r = new Referente();
+		r.setCognome("Trojani");
+		r.setNome("Massimo");
+		r.setCfPiva("TRJMSM57S23B474Z");
+		
+		PubblicazioneFornitureServizi p = new PubblicazioneFornitureServizi();		
+		p.setId("FS800086304202020002");
+		p.setCodiceFiscaleSA("80008630420");
+		p.setUfficio("Regione Marche");
+		p.setAnno("2020");
+		p.setDescrizione("Programma biennale degli acquisti di 2020/2021");
+		p.setNumeroApprovazione("000001");
+		p.setDataApprovazione("21/02/2020");
+		p.setDataPubblicazioneApprovazione("21/02/2020");
+		p.setTitoloAttoApprovazione("delibera");
+		p.setUrlAttoApprovazione("http://www.google.it");
+		p.setReferente(r);
+		if (ProcedureFabbisogno.size() > 0 || ProcedureConfermate.size() > 0)
+			p.setAcquisti(mapperFornitureServizi(ProcedureFabbisogno, ProcedureConfermate, 2020));
+		if (ProcedureNonRiproposte.size() > 0)
+			p.setAcquistiNonRiproposti(mapperAcquistiNonRiproposti(ProcedureNonRiproposte));
+		
+		try {
+			Login loginGbj = WsLogin();
+			String json = mapper.writeValueAsString(p);
+			
+			String userHomeFolder = System.getProperty("user.home").concat("/Desktop");
+			File textFile = new File(userHomeFolder, "json.json");
+			BufferedWriter out = new BufferedWriter(new FileWriter(textFile));
+			try {
+				out.write(json);
+			} finally {
+			   out.close();
+			}
+			
+			PubblicaFornitureServizi(loginGbj.getToken(), json, "1");
+		}
+		catch (JsonGenerationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (JsonMappingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+	}
+	
+	private ArrayList<AcquistiNonRiproposti> mapperAcquistiNonRiproposti(List<ProcedureDefinitive> proceduredefinitive) {
+		ArrayList<AcquistiNonRiproposti> acquisti = new ArrayList<AcquistiNonRiproposti>();
+		
+		for (ProcedureDefinitive p: proceduredefinitive) {
+			AcquistiNonRiproposti a = new AcquistiNonRiproposti();
+			a.setCui(p.getCui());
+			if (p.getCup() != null && !p.getCup().isEmpty())
+			a.setCup(p.getCup());
+			a.setDescrizione(p.getDescrizione());
+			a.setImporto(p.getTotaleIvaQuadroEconomico().toString());
+			switch (p.getPriorita().toString()) {
+				case "max":
+					a.setPriorita("1");
+					break;
+				case "media":
+					a.setPriorita("2");
+				case "min":
+					a.setPriorita("3");
+				default:
+					break;
+			}
+			a.setMotivo(p.getNotenonriproposta());	
+			acquisti.add(a);
+		}
+		return acquisti;
+	}
+	
+	private ArrayList<Acquisti> mapperFornitureServizi(List<Procedure> procedure, List<ProcedureDefinitive> proceduredefinitive, int anniRifMan) {
+		
+		ArrayList<Acquisti> acquisti = new ArrayList<Acquisti>();
+		
+		int i = 1;
+		for (Procedure p: procedure) {
+			Acquisti a = new Acquisti();
+			if (p.getUltimopianoapprovato() != null) {
+				a.setCui(p.getUltimopianoapprovato().getCui());
+			}
+			else {
+				a.setCui(p.getSettore().toString().toUpperCase().substring(0, 1).concat("80008630420").concat(p.getAnno0().toString()).concat(p.CodiceInterno(Integer.toString(i))));
+				i++;
+			}
+			a.setSettore(p.getSettore().toString().substring(0, 1));
+			a.setCodiceInterno(p.getCodiceinterno().toString());
+			a.setDescrizione(p.getDescrizione());
+			Calendar calendar = Calendar.getInstance();
+	        calendar.setTime(p.getData());
+	        
+	        if (calendar.get(Calendar.YEAR) == anniRifMan)
+	        	a.setAnno(Integer.toString(1));
+	        else if (calendar.get(Calendar.YEAR) == anniRifMan + 1)
+	        	a.setAnno(Integer.toString(2));
+	        else if (calendar.get(Calendar.YEAR) == anniRifMan + 2)
+				a.setAnno(Integer.toString(3));
+				
+	        if (p.getCup() != null && !p.getCup().isEmpty())
+	        {
+	        	a.setEsenteCup("2");
+	        	a.setCup(p.getCup());
+	        }
+	        else
+	        	a.setEsenteCup("1");
+	        
+	        if (p.getRicompreso().toString() == "No")
+	        {
+	        	a.setAcquistoRicompreso("1");
+	        }
+	        else if (p.getRicompreso().toString() == "Si")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompreso().getCui());
+	        }
+	        else if (p.getRicompreso().toString() == "SiLavori")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompresoLavori());
+	        }
+	        else if (p.getRicompreso().toString() == "SiInterventiOacquistiDiversi")
+	        {
+	        	a.setAcquistoRicompreso("4");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoLavori")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoServizi")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        
+	        a.setCpv(p.getCpv().getCodice());
+			a.setNuts(p.getAmbitogeografico().getCodice());
+			if (p.getQuantita() != null)
+				a.setQuantita(p.getQuantita().toString());
+			
+			if (p.getUmisura() != null)
+			{
+				switch (p.getUmisura().getDescrizione()) {
+					case "ora":
+						a.setUnitaMisura("1");
+						break;
+					case "giorno":
+						a.setUnitaMisura("2");
+						break;
+					case "grammo":
+						a.setUnitaMisura("3");
+						break;
+					case "chilogrammo":
+						a.setUnitaMisura("4");
+						break;
+					case "quintale":
+						a.setUnitaMisura("5");
+						break;
+					case "tonnellata":
+						a.setUnitaMisura("6");
+						break;
+					case "millilitro":
+						a.setUnitaMisura("7");
+						break;
+					case "litro":
+						a.setUnitaMisura("8");
+						break;
+					case "ettolitro":
+						a.setUnitaMisura("9");
+						break;
+					case "millimetro":
+						a.setUnitaMisura("10");
+						break;
+					case "centimetro":
+						a.setUnitaMisura("11");
+						break;
+					case "metro":
+						a.setUnitaMisura("12");
+						break;
+					case "chilometro":
+						a.setUnitaMisura("13");
+						break;
+					case "metro quadrato":
+						a.setUnitaMisura("14");
+						break;
+					case "metro cubo":
+						a.setUnitaMisura("15");
+						break;
+					case "a corpo":
+						a.setUnitaMisura("16");
+						break;
+					case "unità":
+						a.setUnitaMisura("17");
+						break;
+					default:
+						break;
+				}
+			}
+			
+			switch (p.getPriorita().toString()) {
+				case "max":
+					a.setPriorita("1");
+					break;
+				case "media":
+					a.setPriorita("2");
+				case "min":
+					a.setPriorita("3");
+				default:
+					break;
+			}
+			if (p.getLotto())
+				a.setLottoFunzionale("1");
+			else
+				a.setLottoFunzionale("2");
+			
+			a.setDurataInMesi(Integer.toString(p.getDurata()));
+			
+			if (p.getTaffidamento().toString().equals("NuovoContratto"))
+				a.setNuovoAffidamento("1");
+			else
+				a.setNuovoAffidamento("2");
+			
+			BigDecimal qInn = new BigDecimal(0);
+			BigDecimal qExec = new BigDecimal(0);
+			BigDecimal qAff = new BigDecimal(0);
+			BigDecimal qProg = new BigDecimal(0);
+			
+			//calcolo degli incentivi
+			if (p.getRicompreso() != null && p.getRicompreso().toString() == "No")
+			{
+				if (p.isFondoenable()) {
+					qInn = p.getQuotaInnovazioneTotale();
+					qExec = p.getGdl113Exec();
+					qAff = p.getGdl113Affida();
+					qProg = p.getGdl113Program();
+		    	}
+		    	if (p.isQuotainnovazioneenable() && !p.isFondoenable())
+		    	{
+		    		qInn = p.getQuotaInnovazioneTotale();
+		    	}
+		    	if (p.isQuotagdlenable() && !p.isFondoenable())
+		    	{
+		    		qExec = p.getGdl113Exec();
+					qAff = p.getGdl113Affida();
+					qProg = p.getGdl113Program();
+		    	}
+		    	if (p.isProgramenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qProg = p.getGdl113Program();
+		    	}
+		    	if (p.isAffidaenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qAff = p.getGdl113Affida();
+		    	}
+		    	if (p.isExecenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qExec = p.getGdl113Exec();
+		    	}
+			}
+			
+			BigDecimal vinA1 = new BigDecimal(0);
+			BigDecimal vinA2 = new BigDecimal(0);
+			BigDecimal vinA3 = new BigDecimal(0);
+			
+			BigDecimal mutA1 = new BigDecimal(0);
+			BigDecimal mutA2 = new BigDecimal(0);
+			BigDecimal mutA3 = new BigDecimal(0);
+			
+			BigDecimal capA1 = new BigDecimal(0);
+			BigDecimal capA2 = new BigDecimal(0);
+			BigDecimal capA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1 = new BigDecimal(0);
+			BigDecimal bilA2 = new BigDecimal(0);
+			BigDecimal bilA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1s = new BigDecimal(0);
+			BigDecimal bilA2s = new BigDecimal(0);
+			BigDecimal bilA3s = new BigDecimal(0);
+			
+			BigDecimal bilA1n = new BigDecimal(0);
+			BigDecimal bilA2n = new BigDecimal(0);
+			BigDecimal bilA3n = new BigDecimal(0);
+			
+			BigDecimal finA1 = new BigDecimal(0);
+			BigDecimal finA2 = new BigDecimal(0);
+			BigDecimal finA3 = new BigDecimal(0);
+			
+			BigDecimal traA1 = new BigDecimal(0);
+			BigDecimal traA2 = new BigDecimal(0);
+			BigDecimal traA3 = new BigDecimal(0);
+			
+			BigDecimal altA1 = new BigDecimal(0);
+			BigDecimal altA2 = new BigDecimal(0);
+			BigDecimal altA3 = new BigDecimal(0);
+			
+			BigDecimal ivaA1 = new BigDecimal(0);
+			BigDecimal ivaA2 = new BigDecimal(0);
+			BigDecimal ivaA3 = new BigDecimal(0);
+			
+			boolean coperturafinaziaria = true;
+			
+			String caratterizzazioneCapitaliPrivati = "";
+			
+			for (QuadroEconomico q: p.getQuadroeconomico())
+	        {
+				BigDecimal percentageA3 = new BigDecimal(100).subtract(q.getPercentualeA1().add(q.getPercentualeA2()));
+				
+				ivaA1 = ivaA1.add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)));
+				ivaA2 =	ivaA2.add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100)));
+				ivaA3 = ivaA3.add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100)));
+				
+				if (q.getTipoCopertura().getKey().equals("VIN"))
+				{
+					vinA1 = vinA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					vinA2 = vinA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					vinA3 = vinA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("MUT"))
+				{
+					mutA1 = mutA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					mutA2 = mutA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					mutA3 = mutA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("CAP"))
+				{
+					caratterizzazioneCapitaliPrivati = q.getCaratterizzazioneCopertura().getNome();
+					capA1 = capA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					capA2 = capA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					capA3 = capA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("BIL"))
+				{
+					bilA1 = bilA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					bilA2 = bilA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					bilA3 = bilA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					
+					if (q.getCaratterizzazioneCopertura().getNome().equals("stanziato"))
+					{
+						bilA1s = bilA1s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2s = bilA2s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3s = bilA3s.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+					else if (q.getCaratterizzazioneCopertura().getNome().equals("anni successivi"))
+					{
+						coperturafinaziaria = false;
+						bilA1n = bilA1n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2n = bilA2n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3n = bilA3n.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("FIN"))
+				{
+					finA1 = finA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					finA2 = finA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					finA3 = finA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("TRA"))
+				{
+					traA1 = traA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					traA2 = traA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					traA3 = traA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("ALT"))
+				{
+					altA1 = altA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					altA2 = altA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					altA3 = altA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+	        }     
+			
+			a.setRisorseVincolatePerLegge1(vinA1.toString());
+			a.setRisorseVincolatePerLegge2(vinA2.toString());
+			a.setRisorseVincolatePerLeggeSucc(vinA3.toString());
+			a.setRisorseMutuo1(mutA1.toString());
+			a.setRisorseMutuo2(mutA2.toString());
+			a.setRisorseMutuoSucc(mutA3.toString());
+			a.setRisorsePrivati1(capA1.toString());
+			a.setRisorsePrivati2(capA2.toString());
+			a.setRisorsePrivatiSucc(capA3.toString());
+			a.setRisorseBilancio1(bilA1.toString());
+			a.setRisorseBilancio2(bilA2.toString());
+			a.setRisorseBilancioSucc(bilA3.toString());
+			a.setRisorseArt3_1(finA1.toString());
+			a.setRisorseArt3_2(finA2.toString());
+			a.setRisorseArt3_Succ(finA3.toString());
+			a.setRisorseImmobili1(traA1.toString());
+			a.setRisorseImmobili2(traA2.toString());
+			a.setRisorseImmobiliSucc(traA3.toString());
+			a.setRisorseAltro1(altA1.toString());
+			a.setRisorseAltro2(altA2.toString());
+			a.setRisorseAltroSucc(altA3.toString());
+			if (p.getCostipregressi() != null)
+				a.setSpeseSostenute(p.getCostipregressi().toString());
+
+			if (!caratterizzazioneCapitaliPrivati.isEmpty())
+			{
+				switch (caratterizzazioneCapitaliPrivati)
+				{
+					case "altro":
+						a.setTipologiaCapitalePrivato("9");
+						break;
+					case "finanza di progetto":
+						a.setTipologiaCapitalePrivato("1");
+						break;
+					case "concessione di costruzione e gestione":
+						a.setTipologiaCapitalePrivato("2");
+						break;
+					case "sponsorizzazione":
+						a.setTipologiaCapitalePrivato("3");
+						break;
+					case "società partecipate o di scopo":
+						a.setTipologiaCapitalePrivato("4");
+						break;
+					case "locazione finanziaria":
+						a.setTipologiaCapitalePrivato("5");
+						break;
+					case "contratto di disponibilità":
+						a.setTipologiaCapitalePrivato("6");
+						break;
+				}
+			}
+			
+			a.setMeseAvvioProcedura(Integer.toString(calendar.get(Calendar.MONTH) + 1));
+			
+			if (p.getAusa().getDenominazione().contains("CONSIP"))
+			{
+				a.setDelega("1");
+				a.setCodiceSoggettoDelegato(p.getAusa().getCodice());
+				a.setNomeSoggettoDelegato(p.getAusa().getDenominazione());
+			}
+			else
+				a.setDelega("2");
+			
+			//a.setVariato("");
+			
+			a.setNote(p.getNote());
+			
+			//a.setImportoRisorseFinanziarie("0.00");
+			//a.setImportoRisorseFinanziarieRegionali("0.00");
+			//a.setImportoRisorseFinanziarieAltro("0.00");
+			/*
+			a.setDirezioneGenerale("");
+			a.setStrutturaOperativa("");
+			a.setReferenteDati("");
+			a.setDirigenteResponsabile("");
+			a.setProceduraAffidamento("1");
+			*/
+			if (p.getVerdi() && p.getOggettoAcquistiVerdi() != null && !p.getOggettoAcquistiVerdi().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()) == p.getCostoTotale())
+					a.setAcquistoVerdi("2");
+				else
+					a.setAcquistoVerdi("3");
+				a.setNormativaRiferimento(p.getRiferimentoNormativoVerdi());
+				a.setOggettoVerdi(p.getOggettoAcquistiVerdi());
+				a.setCpvVerdi(p.getCpvAcquistiVerdi());
+				a.setImportoNettoIvaVerdi(p.getImportoNettoAcquistiVerdi().toString());
+				a.setImportoIvaVerdi(p.getAliquotaIvaAcquistiVerdi().toString());
+				a.setImportoTotVerdi(p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()).toString());
+			}
+			else
+				a.setAcquistoVerdi("1");
+			if (p.getOggettoAcquistiMaterialiRiciclati() != null && !p.getOggettoAcquistiMaterialiRiciclati().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()) == p.getCostoTotale())
+					a.setAcquistoMaterialiRiciclati("2");
+				else
+					a.setAcquistoMaterialiRiciclati("3");
+				a.setOggettoMatRic(p.getOggettoAcquistiMaterialiRiciclati());
+				a.setCpvMatRic(p.getCpvAcquistiMaterialiRiciclati());
+				a.setImportoNettoIvaMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().toString());
+				a.setImportoIvaMatRic(p.getAliquotaIvaAcquistiMaterialiRiciclati().toString());
+				a.setImportoTotMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()).toString());
+			}
+			else
+				a.setAcquistoMaterialiRiciclati("1");
+			a.setImportoIva1(ivaA1.toString());
+			a.setImportoIva2(ivaA2.toString());
+			a.setImportoIvaSucc(ivaA3.toString());
+			
+			if (coperturafinaziaria)
+				a.setCoperturaFinanziaria("1");
+			else 
+				a.setCoperturaFinanziaria("2");
+			a.setValutazione("1");
+			a.setImportoTotale(p.getTotaleCoperture().toString());
+			a.setRup(mapperRup(p.getDipendenti()));
+			acquisti.add(a);
+		}
+		
+		for (ProcedureDefinitive p: proceduredefinitive) {
+			Acquisti a = new Acquisti();
+			a.setCui(p.getCui());
+			a.setSettore(p.getSettore().toString().substring(0, 1));
+			a.setCodiceInterno(p.getCui().substring(16, 21));
+			a.setDescrizione(p.getDescrizione());
+			Calendar calendar = Calendar.getInstance();
+	        calendar.setTime(p.getData());
+	        
+	        if (calendar.get(Calendar.YEAR) == p.getAnno0())
+	        	a.setAnno(Integer.toString(1));
+	        else if (calendar.get(Calendar.YEAR) == p.getAnno0() + 1)
+	        	a.setAnno(Integer.toString(2));
+	        else if (calendar.get(Calendar.YEAR) == p.getAnno0() + 2)
+				a.setAnno(Integer.toString(3));
+				
+	        if (p.getCup() != null && !p.getCup().isEmpty())
+	        {
+	        	a.setEsenteCup("2");
+	        	a.setCup(p.getCup());
+	        }
+	        else
+	        	a.setEsenteCup("1");
+	        
+	        if (p.getRicompreso().toString() == "No")
+	        {
+	        	a.setAcquistoRicompreso("1");
+	        }
+	        else if (p.getRicompreso().toString() == "Si")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompreso().getCui());
+	        }
+	        else if (p.getRicompreso().toString() == "SiLavori")
+	        {
+	        	a.setAcquistoRicompreso("2");
+	        	a.setCuiCollegato(p.getCuiRicompresoLavori());
+	        }
+	        else if (p.getRicompreso().toString() == "SiInterventiOacquistiDiversi")
+	        {
+	        	a.setAcquistoRicompreso("4");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoLavori")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        else if (p.getRicompreso().toString() == "SiCuiNonAncoraAttribuitoServizi")
+	        {
+	        	a.setAcquistoRicompreso("3");
+	        }
+	        
+	        a.setCpv(p.getCpv().getCodice());
+			a.setNuts(p.getAmbitogeografico().getCodice());
+			
+			if (p.getQuantita() != null)
+				a.setQuantita(p.getQuantita().toString());
+			
+			if (p.getUmisura() != null)
+			{
+				switch (p.getUmisura().getDescrizione()) {
+					case "ora":
+						a.setUnitaMisura("1");
+						break;
+					case "giorno":
+						a.setUnitaMisura("2");
+						break;
+					case "grammo":
+						a.setUnitaMisura("3");
+						break;
+					case "chilogrammo":
+						a.setUnitaMisura("4");
+						break;
+					case "quintale":
+						a.setUnitaMisura("5");
+						break;
+					case "tonnellata":
+						a.setUnitaMisura("6");
+						break;
+					case "millilitro":
+						a.setUnitaMisura("7");
+						break;
+					case "litro":
+						a.setUnitaMisura("8");
+						break;
+					case "ettolitro":
+						a.setUnitaMisura("9");
+						break;
+					case "millimetro":
+						a.setUnitaMisura("10");
+						break;
+					case "centimetro":
+						a.setUnitaMisura("11");
+						break;
+					case "metro":
+						a.setUnitaMisura("12");
+						break;
+					case "chilometro":
+						a.setUnitaMisura("13");
+						break;
+					case "metro quadrato":
+						a.setUnitaMisura("14");
+						break;
+					case "metro cubo":
+						a.setUnitaMisura("15");
+						break;
+					case "a corpo":
+						a.setUnitaMisura("16");
+						break;
+					case "unità":
+						a.setUnitaMisura("17");
+						break;
+					default:
+						break;
+				}
+			}
+			
+			switch (p.getPriorita().toString()) {
+				case "max":
+					a.setPriorita("1");
+					break;
+				case "media":
+					a.setPriorita("2");
+				case "min":
+					a.setPriorita("3");
+				default:
+					break;
+			}
+			if (p.getLotto())
+				a.setLottoFunzionale("1");
+			else
+				a.setLottoFunzionale("2");
+			
+			a.setDurataInMesi(Integer.toString(p.getDurata()));
+			
+			if (p.getTaffidamento().toString().equals("NuovoContratto"))
+				a.setNuovoAffidamento("1");
+			
+			BigDecimal qInn = new BigDecimal(0);
+			BigDecimal qExec = new BigDecimal(0);
+			BigDecimal qAff = new BigDecimal(0);
+			BigDecimal qProg = new BigDecimal(0);
+			
+			//calcolo degli incentivi
+			if (p.getRicompreso() != null && p.getRicompreso().toString() == "No")
+			{
+				if (p.isFondoenable()) {
+					qInn = p.getQuotaInnovazioneTotale();
+					qExec = p.getGdl113Exec();
+					qAff = p.getGdl113Affida();
+					qProg = p.getGdl113Program();
+		    	}
+		    	if (p.isQuotainnovazioneenable() && !p.isFondoenable())
+		    	{
+		    		qInn = p.getQuotaInnovazioneTotale();
+		    	}
+		    	if (p.isQuotagdlenable() && !p.isFondoenable())
+		    	{
+		    		qExec = p.getGdl113Exec();
+					qAff = p.getGdl113Affida();
+					qProg = p.getGdl113Program();
+		    	}
+		    	if (p.isProgramenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qProg = p.getGdl113Program();
+		    	}
+		    	if (p.isAffidaenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qAff = p.getGdl113Affida();
+		    	}
+		    	if (p.isExecenable() && !p.isFondoenable() && !p.isQuotagdlenable())
+		    	{
+		    		qExec = p.getGdl113Exec();
+		    	}
+			}
+			
+			BigDecimal vinA1 = new BigDecimal(0);
+			BigDecimal vinA2 = new BigDecimal(0);
+			BigDecimal vinA3 = new BigDecimal(0);
+			
+			BigDecimal mutA1 = new BigDecimal(0);
+			BigDecimal mutA2 = new BigDecimal(0);
+			BigDecimal mutA3 = new BigDecimal(0);
+			
+			BigDecimal capA1 = new BigDecimal(0);
+			BigDecimal capA2 = new BigDecimal(0);
+			BigDecimal capA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1 = new BigDecimal(0);
+			BigDecimal bilA2 = new BigDecimal(0);
+			BigDecimal bilA3 = new BigDecimal(0);
+			
+			BigDecimal bilA1s = new BigDecimal(0);
+			BigDecimal bilA2s = new BigDecimal(0);
+			BigDecimal bilA3s = new BigDecimal(0);
+			
+			BigDecimal bilA1n = new BigDecimal(0);
+			BigDecimal bilA2n = new BigDecimal(0);
+			BigDecimal bilA3n = new BigDecimal(0);
+			
+			BigDecimal finA1 = new BigDecimal(0);
+			BigDecimal finA2 = new BigDecimal(0);
+			BigDecimal finA3 = new BigDecimal(0);
+			
+			BigDecimal traA1 = new BigDecimal(0);
+			BigDecimal traA2 = new BigDecimal(0);
+			BigDecimal traA3 = new BigDecimal(0);
+			
+			BigDecimal altA1 = new BigDecimal(0);
+			BigDecimal altA2 = new BigDecimal(0);
+			BigDecimal altA3 = new BigDecimal(0);
+			
+			BigDecimal ivaA1 = new BigDecimal(0);
+			BigDecimal ivaA2 = new BigDecimal(0);
+			BigDecimal ivaA3 = new BigDecimal(0);
+			
+			boolean coperturafinaziaria = true;
+			String caratterizzazioneCapitaliPrivati = "";
+			
+			for (QuadroEconomicoDefinitivo q: p.getQuadroeconomico())
+	        {					
+				BigDecimal percentageA3 = new BigDecimal(100).subtract(q.getPercentualeA1().add(q.getPercentualeA2()));
+				
+				ivaA1 = ivaA1.add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)));
+				ivaA2 =	ivaA2.add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100)));
+				ivaA3 = ivaA3.add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100)));
+				
+				if (q.getTipoCopertura().getKey().equals("VIN"))
+				{
+					vinA1 = vinA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					vinA2 = vinA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					vinA3 = vinA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("MUT"))
+				{
+					mutA1 = mutA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					mutA2 = mutA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					mutA3 = mutA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("CAP"))
+				{
+					caratterizzazioneCapitaliPrivati = q.getCaratterizzazioneCopertura().getNome();
+					capA1 = capA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					capA2 = capA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					capA3 = capA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("BIL"))
+				{
+					bilA1 = bilA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					bilA2 = bilA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					bilA3 = bilA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					
+					if (q.getCaratterizzazioneCopertura().getNome().equals("stanziato"))
+					{
+						bilA1s = bilA1s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2s = bilA2s.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3s = bilA3s.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+					else if (q.getCaratterizzazioneCopertura().getNome().equals("anni successivi"))
+					{
+						coperturafinaziaria = false;
+						bilA1n = bilA1n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+						bilA2n = bilA2n.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+						bilA3n = bilA3n.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+					}
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("FIN"))
+				{
+					finA1 = finA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					finA2 = finA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					finA3 = finA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("TRA"))
+				{
+					traA1 = traA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					traA2 = traA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					traA3 = traA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+				
+				if (q.getTipoCopertura().getKey().equals("ALT"))
+				{
+					altA1 = altA1.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA1().divide(new BigDecimal(100)))); 
+					altA2 = altA2.add(q.getImportonetto().add(q.getImportoiva()).multiply(q.getPercentualeA2().divide(new BigDecimal(100))));
+					altA3 = altA3.add(q.getImportonetto().add(q.getImportoiva()).multiply(percentageA3.divide(new BigDecimal(100))));
+				}
+	        }     
+			
+			a.setRisorseVincolatePerLegge1(vinA1.toString());
+			a.setRisorseVincolatePerLegge2(vinA2.toString());
+			a.setRisorseVincolatePerLeggeSucc(vinA3.toString());
+			a.setRisorseMutuo1(mutA1.toString());
+			a.setRisorseMutuo2(mutA2.toString());
+			a.setRisorseMutuoSucc(mutA3.toString());
+			a.setRisorsePrivati1(capA1.toString());
+			a.setRisorsePrivati2(capA2.toString());
+			a.setRisorsePrivatiSucc(capA3.toString());
+			a.setRisorseBilancio1(bilA1.toString());
+			a.setRisorseBilancio2(bilA2.toString());
+			a.setRisorseBilancioSucc(bilA3.toString());
+			a.setRisorseArt3_1(finA1.toString());
+			a.setRisorseArt3_2(finA2.toString());
+			a.setRisorseArt3_Succ(finA3.toString());
+			a.setRisorseImmobili1(traA1.toString());
+			a.setRisorseImmobili2(traA2.toString());
+			a.setRisorseImmobiliSucc(traA3.toString());
+			a.setRisorseAltro1(altA1.toString());
+			a.setRisorseAltro2(altA2.toString());
+			a.setRisorseAltroSucc(altA3.toString());
+			if (p.getCostipregressi() != null)
+				a.setSpeseSostenute(p.getCostipregressi().toString());
+			
+			if (!caratterizzazioneCapitaliPrivati.isEmpty())
+			{
+				switch (caratterizzazioneCapitaliPrivati)
+				{
+					case "altro":
+						a.setTipologiaCapitalePrivato("9");
+						break;
+					case "finanza di progetto":
+						a.setTipologiaCapitalePrivato("1");
+						break;
+					case "concessione di costruzione e gestione":
+						a.setTipologiaCapitalePrivato("2");
+						break;
+					case "sponsorizzazione":
+						a.setTipologiaCapitalePrivato("3");
+						break;
+					case "società partecipate o di scopo":
+						a.setTipologiaCapitalePrivato("4");
+						break;
+					case "locazione finanziaria":
+						a.setTipologiaCapitalePrivato("5");
+						break;
+					case "contratto di disponibilità":
+						a.setTipologiaCapitalePrivato("6");
+						break;
+				}
+			}
+			
+			a.setMeseAvvioProcedura(Integer.toString(calendar.get(Calendar.MONTH) + 1));
+			
+			if (p.getAusa().getDenominazione().contains("CONSIP"))
+			{
+				a.setDelega("1");
+				a.setCodiceSoggettoDelegato(p.getAusa().getCodice());
+				a.setNomeSoggettoDelegato(p.getAusa().getDenominazione());
+			}
+			else
+				a.setDelega("2");
+			
+			//a.setVariato("");
+			
+			a.setNote(p.getNote());
+			
+			//a.setImportoRisorseFinanziarie("0.00");
+			//a.setImportoRisorseFinanziarieRegionali("0.00");
+			//a.setImportoRisorseFinanziarieAltro("0.00");
+			/*
+			a.setDirezioneGenerale("");
+			a.setStrutturaOperativa("");
+			a.setReferenteDati("");
+			a.setDirigenteResponsabile("");
+			a.setProceduraAffidamento("1");
+			*/
+			if (p.getVerdi() && p.getOggettoAcquistiVerdi() != null && !p.getOggettoAcquistiVerdi().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()) == p.getCostoTotale())
+					a.setAcquistoVerdi("2");
+				else
+					a.setAcquistoVerdi("3");
+				a.setNormativaRiferimento(p.getRiferimentoNormativoVerdi());
+				a.setOggettoVerdi(p.getOggettoAcquistiVerdi());
+				a.setCpvVerdi(p.getCpvAcquistiVerdi());
+				a.setImportoNettoIvaVerdi(p.getImportoNettoAcquistiVerdi().toString());
+				a.setImportoIvaVerdi(p.getAliquotaIvaAcquistiVerdi().toString());
+				a.setImportoTotVerdi(p.getImportoNettoAcquistiVerdi().add(p.getAliquotaIvaAcquistiVerdi()).toString());
+			}
+			else
+				a.setAcquistoVerdi("1");
+			if (p.getOggettoAcquistiMaterialiRiciclati() != null && !p.getOggettoAcquistiMaterialiRiciclati().isEmpty())
+			{
+				if (p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()) == p.getCostoTotale())
+					a.setAcquistoMaterialiRiciclati("2");
+				else
+					a.setAcquistoMaterialiRiciclati("3");
+				a.setOggettoMatRic(p.getOggettoAcquistiMaterialiRiciclati());
+				a.setCpvMatRic(p.getCpvAcquistiMaterialiRiciclati());
+				a.setImportoNettoIvaMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().toString());
+				a.setImportoIvaMatRic(p.getAliquotaIvaAcquistiMaterialiRiciclati().toString());
+				a.setImportoTotMatRic(p.getImportoNettoAcquistiMaterialiRiciclati().add(p.getAliquotaIvaAcquistiMaterialiRiciclati()).toString());
+			}
+			else
+				a.setAcquistoMaterialiRiciclati("1");
+			a.setImportoIva1(ivaA1.toString());
+			a.setImportoIva2(ivaA2.toString());
+			a.setImportoIvaSucc(ivaA3.toString());
+			
+			if (coperturafinaziaria)
+				a.setCoperturaFinanziaria("1");
+			else 
+				a.setCoperturaFinanziaria("2");
+			a.setValutazione("1");
+			a.setImportoTotale(p.getTotaleCoperture().toString());
+			a.setRup(mapperRup(p.getDipendenti()));
+			acquisti.add(a);
+		}
+		
+		return acquisti;
+	}
+	
+	private Rup mapperRup(Dipendenti d) {
+		Rup rup = new Rup();
+		rup.setCognome(d.getCognome());
+		rup.setNome(d.getNome());
+		rup.setCfPiva(d.getCf());
+		return rup;
+	}
+
+	private void PubblicaFornitureServizi(String token, String json, String modalitaInvio) {
+		try {
+			String https_url = "https://www.serviziocontrattipubblici.it/WSProgrammiCollaudo/rest/Programmi/PubblicaFornitureServizi?token=" 
+		              + token + "&modalitaInvio=" + modalitaInvio;
+			
+			// Create a trust manager that does not validate certificate chains
+	        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+	            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+	                return null;
+	            }
+	            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+	            }
+	            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+	            }
+	        } };
+	        // Install the all-trusting trust manager
+	        final SSLContext sc = SSLContext.getInstance("SSL");
+	        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+	        // Create all-trusting host name verifier
+	        HostnameVerifier allHostsValid = new HostnameVerifier() {
+	            public boolean verify(String hostname, SSLSession session) {
+	                return true;
+	            }
+	        };
+	
+	        // Install the all-trusting host verifier
+	        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+			
+	        URL url = new URL(https_url);
+	        
+	        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+	        conn.setRequestMethod("POST");
+	        conn.setRequestProperty("Accept", "application/json");
+	        conn.setRequestProperty("Content-Type", "application/json");
+	        conn.setDoOutput(true);
+	        
+	        conn.getOutputStream().write(json.getBytes("utf-8"));
+	        
+	        PubblicazioneResponse responseObj = new PubblicazioneResponse();
+	        
+	        BufferedReader in = new BufferedReader(
+	                new InputStreamReader(conn.getInputStream()));
+	        
+	        BufferedReader in2 = new BufferedReader(
+	                new InputStreamReader(conn.getErrorStream()));
+	        
+	        String output;
+	        StringBuffer response = new StringBuffer();
+	       
+	        while ((output = in2.readLine()) != null) {
+	         response.append(output);
+	         responseObj = new ObjectMapper().readValue(output, PubblicazioneResponse.class);
+	        }
+	        in.close();
+    		    
+		    EsportazioneDati e = new EsportazioneDati();
+		    Date date = new Date();
+		    e.setData(date);
+		    e.setJsonSentData(json);
+		    e.setJsonAnswer(response.toString());
+		    e.setStatusCode(conn.getResponseCode());
+		    
+		    String message = "Esportazione.Error";
+		    
+		    if (responseObj.getId() != null && responseObj.getId() != "null")
+		    {
+		    	e.setSuccess(true);
+		    	e.setIdEsportazione(Integer.parseInt(responseObj.getId()));
+		    	message = "Esportazione.Success";
+		    }
+		    else
+		    	e.setSuccess(false);
+		    XPersistence.commit();
+
+		    addMessage(message);
+	        conn.disconnect();
+	        	
+		} catch (Exception e) {
+            System.out.println("Exception in NetClientGet:- " + e);
+        }
+	}
+	
+	private Login WsLogin() {
+		Login loginObj = new Login();
+		try {
+
+			String username = ProgrammaBiennalePreferences.getDefaultUsername();
+			String password = ProgrammaBiennalePreferences.getDefaultPassword();
+			String clientId = ProgrammaBiennalePreferences.getDefaultClientId();
+			String clientKey = ProgrammaBiennalePreferences.getDefaultClientKey();
+				
+			String https_url = "https://www.serviziocontrattipubblici.it/WSLoginCollaudo/rest/Account/LoginPubblica?username=" 
+	              + username + "&password=" + password + "&clientKey=" + clientKey + "&clientId=" + clientId;
+			
+			// Create a trust manager that does not validate certificate chains
+	        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+	            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+	                return null;
+	            }
+	            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+	            }
+	            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+	            }
+	        } };
+	        // Install the all-trusting trust manager
+	        final SSLContext sc = SSLContext.getInstance("SSL");
+	        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+	        // Create all-trusting host name verifier
+	        HostnameVerifier allHostsValid = new HostnameVerifier() {
+	            public boolean verify(String hostname, SSLSession session) {
+	                return true;
+	            }
+	        };
+
+	        // Install the all-trusting host verifier
+	        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+			
+	        URL url = new URL(https_url);
+            
+            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            if (conn.getResponseCode() != 200) {
+                throw new RuntimeException("Failed : HTTP Error code : "
+                        + conn.getResponseCode());
+            }
+            InputStreamReader in = new InputStreamReader(conn.getInputStream());
+            BufferedReader br = new BufferedReader(in);
+            String output;
+            
+            while ((output = br.readLine()) != null) {
+            	loginObj = new ObjectMapper().readValue(output, Login.class);
+            }
+            conn.disconnect();
+
+        } catch (Exception e) {
+            System.out.println("Exception in NetClientGet:- " + e);
+        }
+		
+		return loginObj;
+	}
+	
+	private PubblicazioneFornitureServizi createTestData() {
+		Referente r = new Referente();
+		r.setCognome("Aureli");
+		r.setNome("Marco");
+		r.setCfPiva("RLAMRC85E22B474E");
+		r.setCap("62032");
+		r.setCivico("97");
+		r.setIndirizzo("Via Farnese");
+		r.setLuogoIstat("011043007");
+		r.setProvincia("MC");
+		
+		Rup rup = new Rup();
+		rup.setCognome("Aureli");
+		rup.setNome("Marco");
+		rup.setCfPiva("RLAMRC85E22B474E");
+		rup.setCap("62032");
+		rup.setCivico("97");
+		rup.setIndirizzo("Via Farnese");
+		rup.setLuogoIstat("011043007");
+		rup.setProvincia("MC");
+		
+		ArrayList<Acquisti> acquisti = new ArrayList<Acquisti>();
+		Acquisti a = new Acquisti();
+		a.setCui("S80008630420202000324");
+		a.setSettore("S");
+		a.setCodiceInterno("00324");
+		a.setDescrizione("Integrazione per un ulteriore anno del contratto per l'acquisizione dei diritti di utilizzo della voce e dell’immagine del ciclista Vincenzo Nibali abbinati alla campagna promozionale Marche Outdoor");
+		a.setAnno("1");
+		a.setEsenteCup("1");
+		a.setAcquistoRicompreso("1");
+		//a.setCuiCollegato("");
+		a.setCpv("79342200-5");
+		a.setNuts("IT");
+		//a.setQuantita("");
+		//a.setUnitaMisura("");
+		a.setPriorita("1");
+		a.setLottoFunzionale("2");
+		a.setDurataInMesi("12");
+		a.setNuovoAffidamento("1");
+		a.setRisorseVincolatePerLegge1("0.00");
+		a.setRisorseVincolatePerLegge2("0.00");
+		a.setRisorseVincolatePerLeggeSucc("0.00");
+		a.setRisorseMutuo1("0.00");
+		a.setRisorseMutuo2("0.00");
+		a.setRisorseMutuoSucc("0.00");
+		a.setRisorsePrivati1("0.00");
+		a.setRisorsePrivati2("0.00");
+		a.setRisorsePrivatiSucc("0.00");
+		a.setRisorseBilancio1("1000.00");
+		a.setRisorseBilancio2("0.00");
+		a.setRisorseBilancioSucc("0.00");
+		a.setRisorseArt3_1("0.00");
+		a.setRisorseArt3_2("0.00");
+		a.setRisorseArt3_Succ("0.00");
+		a.setRisorseImmobili1("0.00");
+		a.setRisorseImmobili2("0.00");
+		a.setRisorseImmobiliSucc("0.00");
+		a.setRisorseAltro1("0.00");
+		a.setRisorseAltro2("0.00");
+		a.setRisorseAltroSucc("0.00");
+		a.setSpeseSostenute("0.00");
+		//a.setTipologiaCapitalePrivato("");
+		//a.setMeseAvvioProcedura("");
+		a.setDelega("2");
+		//a.setCodiceSoggettoDelegato("");
+		//a.setNomeSoggettoDelegato("");
+		//a.setVariato("");
+		a.setNote("");
+		a.setImportoRisorseFinanziarie("0.00");
+		a.setImportoRisorseFinanziarieRegionali("0.00");
+		a.setImportoRisorseFinanziarieAltro("0.00");
+		a.setDirezioneGenerale("");
+		a.setStrutturaOperativa("");
+		a.setReferenteDati("");
+		a.setDirigenteResponsabile("");
+		a.setProceduraAffidamento("1");
+		a.setAcquistoVerdi("1");
+		a.setNormativaRiferimento("");
+		a.setOggettoVerdi("");
+		a.setCpvVerdi("");
+		a.setImportoNettoIvaVerdi("0.00");
+		a.setImportoIvaVerdi("0.00");
+		a.setImportoTotVerdi("0.00");
+		a.setAcquistoMaterialiRiciclati("1");
+		a.setOggettoMatRic("");
+		a.setCpvMatRic("");
+		a.setImportoNettoIvaMatRic("0.00");
+		a.setImportoIvaMatRic("0.00");
+		a.setImportoTotMatRic("0.00");
+		a.setImportoIva1("0.00");
+		a.setImportoIva2("0.00");
+		a.setImportoIvaSucc("0.00");
+		a.setCoperturaFinanziaria("1");
+		a.setValutazione("1");
+		a.setImportoTotale("1000.00");
+		a.setRup(rup);
+		acquisti.add(a);
+		
+		ArrayList<AcquistiNonRiproposti> acquistinonriproposti = new ArrayList<AcquistiNonRiproposti>();
+		
+		AcquistiNonRiproposti b = new AcquistiNonRiproposti();
+		b.setCui("S80008630420201900126");
+		b.setCup("H41C19000000007");
+		b.setDescrizione("servizi di sviluppo software per allerte e comunicazione di protezione civile");
+		b.setImporto("40000.00");
+		b.setPriorita("1");
+		b.setMotivo("L'acquisto non viene riproposto per modifica delle necessità della struttura");	
+		acquistinonriproposti.add(b);
+		
+		PubblicazioneFornitureServizi p = new PubblicazioneFornitureServizi();		
+		p.setId("FS80008630420ANNITRI001");
+		p.setCodiceFiscaleSA("80008630420");
+		p.setUfficio("Regione Marche");
+		p.setAnno("2020");
+		p.setDescrizione("Programma biennale degli acquisti di 2020/2021");
+		p.setNumeroApprovazione("000001");
+		p.setDataApprovazione("21/02/2020");
+		p.setDataPubblicazioneApprovazione("21/02/2020");
+		p.setTitoloAttoApprovazione("delibera");
+		p.setUrlAttoApprovazione("httpa://www.google.it");
+		p.setReferente(r);
+		p.setAcquisti(acquisti);
+		p.setAcquistiNonRiproposti(acquistinonriproposti);
+		p.setIdRicevuto(null);	
+		
+		return p;
+	}
+}
+

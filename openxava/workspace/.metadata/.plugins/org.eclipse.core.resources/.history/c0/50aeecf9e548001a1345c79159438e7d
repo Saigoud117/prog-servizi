@@ -1,0 +1,201 @@
+<?xml version = "1.0" encoding = "ISO-8859-1"?>
+
+<!DOCTYPE controllers SYSTEM "dtds/controllers.dtd">
+
+<controllers>
+    
+    <!-- Environment variable:
+    <env-var name="ProgrammaBiennale2020_DEFAULT_YEAR" value="2015"/> 
+    -->
+    
+    <!-- Session object:
+    <object name="ProgrammaBiennale2020_activeYear" class="java.lang.Integer" value="2015" 
+    	    scope="global"/>    
+    -->
+    
+    <!-- Controller:
+    <controller name="Teacher">
+    	<extends controller="Typical"/>
+    	<action name="new" icon="library-plus" keystroke="Control N"
+        	class="actions.CreateTeacher">
+    	</action>
+	</controller>    
+    -->
+    
+    <controller name ="AccorpamentoProcedure">
+   		<extends controller="Typical"/>
+   		<action name="confirmProcedureInProgram" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.ConfirmAggregazioneProcedureInProgramAction" />
+    </controller>
+	
+	<controller name="Procedure">
+		<extends controller="Typical"/>
+	    <action name="duplicate" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.DuplicateAction" />
+        <action name="duplicatePersist" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.DuplicatePersistAction" />
+        <action name="confirmProcedureInProgram" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.ConfirmProcedureInProgramAction" />
+        <action name="caricaProceduraDaProgrammaApprovato" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="true"
+            class="actions.CaricaProceduraDaProgrammaApprovatoAction" />
+        <action name="delete" mode="detail" confirm="true"
+			class="actions.DeleteAction"
+			image="delete.gif"
+			icon="delete"
+			available-on-new="false"
+			keystroke="Control D"/>	 	             
+        <action name="searchExcludingDeleted"
+        	hidden="true"
+        	class="actions.SearchExcludingDeletedAction"/>           	     	       
+	   <action name="deleteSelected" mode="list" confirm="true"
+			process-selected-items="true"
+			image="delete.gif"
+			icon="delete"			 
+			class="actions.DeleteSelectedAction"
+			keystroke="Control D"/>						
+		<action name="deleteRow" mode="NONE" confirm="true"
+			class="actions.DeleteSelectedAction"
+			image="delete.gif"
+			icon="delete"
+			in-each-row="true"/>
+			<!-- 
+		<action name="save" class="actions.UpdateCoperture" 
+			mode="detail" 
+			image="save.gif"
+	        icon="content-save" 
+	        keystroke="Control S" />	
+	        -->
+	</controller>
+	
+	<controller name="GtGare">
+		<action name="search" hidden="true"
+		class="actions.RupSearchAction"
+		image="images/search.gif">
+		</action>
+	</controller>
+	
+	<controller name="ProcedureProgramma">
+		<extends controller="Typical"/>
+        <action name="validateProcedure" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.ValidateProcedureAction" />
+        <!--
+        <action name="calculateCoperture" on-each-request="true" hidden="true" mode="detail" 
+            icon="calculator"
+            image="calculator.gif"
+            class="actions.CalculateCopertureProgramma" />
+        
+		<action name="save" class="actions.UpdateCopertureProgramma" mode="detail" image="save.gif"
+        icon="content-save" keystroke="Control S" />	
+        -->
+    </controller>
+    
+    <controller name="QuadroEconomico">
+		<action name="save" class="actions.SaveQuadroEconomicoDetailAction" />	
+		<action name="remove" class="actions.RemoveQuadroEconomicoDetailAction" />
+		<action name="new" class="actions.NewQuadroEconomicoDetailAction" />	
+		<action name="edit" class="actions.EditQuadroEconomicoDetailAction" />		
+   	</controller>
+   	
+   	<controller name="QuadroEconomicoProgramma">
+		<action name="save" class="actions.SaveQuadroEconomicoProgrammaDetailAction" />	
+		<action name="remove" class="actions.RemoveQuadroEconomicoProgrammaDetailAction" />	
+   	</controller>
+   	
+   	<controller name="QuadroEconomicoDefinitivo">
+		<action name="save" class="actions.SaveQuadroEconomicoDefinitivoDetailAction" />	
+		<action name="remove" class="actions.RemoveQuadroEconomicoDefinitivoDetailAction" />	
+   	</controller>
+    
+    <controller name="PersistProcedureValidateAction">
+    	<action name="add"
+        class="actions.PersistProcedureValidateAction"/>
+	</controller>
+	
+	<env-var
+        name="XAVA_SEARCH_ACTION"
+        value="ProgrammaBiennale.searchExcludingDeleted" />
+	
+	<controller name="ProgrammaBiennale"> 
+	
+	    <extends controller="Typical"/>	 	    
+	        
+	    <action name="delete" mode="detail" confirm="true"
+			class="actions.DeleteAction"
+			image="delete.gif"
+			icon="delete"
+			available-on-new="false"
+			keystroke="Control D"/>	 
+	             
+        <action name="searchExcludingDeleted"
+        	hidden="true"
+        	class="actions.SearchExcludingDeletedAction"/>           	     
+	       
+	   <action name="deleteSelected" mode="list" confirm="true"
+			process-selected-items="true"
+			image="delete.gif"
+			icon="delete"			 
+			class="actions.DeleteSelectedAction"
+			keystroke="Control D"/>				
+		
+		<action name="deleteRow" mode="NONE" confirm="true"
+			class="actions.DeleteSelectedAction"
+			image="delete.gif"
+			icon="delete"
+			in-each-row="true"/>
+	           
+	</controller>
+	
+	<controller name="Trash">
+	    <action name="restore" mode="list"
+	        class="actions.DeleteSelectedAction">
+	        <set property="restore" value="true"/> <!-- Initialize the restore property to -->
+	                <!-- true before calling the execute() method of the action -->
+	    </action>
+	</controller>
+	
+	<controller name="ChangeYear">
+    	<action name="add"
+        class="actions.ChangeYearAction"/>
+	</controller>
+	
+	<controller name="CreateProceduraProgrammaAction">
+    	<action name="add"
+        class="actions.CreateProceduraProgrammaAction"/>
+	</controller>
+	
+	<controller name="CreateAggregazioneProcedureProgrammaAction">
+    	<action name="add"
+        class="actions.CreateAggregazioneProcedureProgrammaAction"/>
+	</controller>
+	
+	<controller name="RecuperaProceduraDefinitivaAction">
+    	<action name="add"
+        class="actions.RecuperaProceduraDefinitivaAction"/>
+	</controller>
+	
+	<controller name="Gdl113Details">
+		<extends controller="Typical"/>
+		<action name="CalculateTotale" 
+			icon="calculator-variant" mode="detail" 
+            class="actions.CalculateGdlTotale" />
+	</controller>
+    
+</controllers>

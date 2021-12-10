@@ -1,0 +1,12 @@
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:38:59 +0100] "GET /favicon.ico HTTP/1.1" 404 973
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:38:59 +0100] "POST /ProgrammaBiennale2020/dwr/call/plaincall/Module.getStrokeActions.dwr HTTP/1.1" 200 119
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:38:59 +0100] "POST /ProgrammaBiennale2020/dwr/call/plaincall/Module.request.dwr HTTP/1.1" 200 592
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "GET /ProgrammaBiennale2020/m/Procedure HTTP/1.1" 200 8023
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "GET /ProgrammaBiennale2020/dwr/interface/Folders.js?ox=6.1.2 HTTP/1.1" 200 508
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "GET /ProgrammaBiennale2020/dwr/interface/Modules.js?ox=6.1.2 HTTP/1.1" 200 985
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "GET /ProgrammaBiennale2020/dwr/util.js?ox=6.1.2 HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "GET /ProgrammaBiennale2020/dwr/interface/Module.js?ox=6.1.2 HTTP/1.1" 200 1144
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "GET /ProgrammaBiennale2020/dwr/interface/Tab.js?ox=6.1.2 HTTP/1.1" 200 1007
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "GET /ProgrammaBiennale2020/dwr/interface/View.js?ox=6.1.2 HTTP/1.1" 200 555
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "POST /ProgrammaBiennale2020/dwr/call/plaincall/Module.getStrokeActions.dwr HTTP/1.1" 200 119
+0:0:0:0:0:0:0:1 - - [15/Jan/2021:09:39:00 +0100] "POST /ProgrammaBiennale2020/dwr/call/plaincall/Module.request.dwr HTTP/1.1" 200 6139

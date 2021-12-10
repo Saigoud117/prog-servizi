@@ -1,0 +1,48 @@
+<?xml version = "1.0" encoding = "ISO-8859-1"?>
+
+<!DOCTYPE controllers SYSTEM "dtds/controllers.dtd">
+
+<controllers>
+    
+    <!-- Environment variable:
+    <env-var name="GestionaleAsd_DEFAULT_YEAR" value="2015"/> 
+    -->
+    
+    <!-- Session object:
+    <object name="GestionaleAsd_activeYear" class="java.lang.Integer" value="2015" 
+    	    scope="global"/>    
+    -->
+    
+    <!-- Controller:
+    <controller name="Teacher">
+    	<extends controller="Typical"/>
+    	<action name="new" icon="library-plus" keystroke="Control N"
+        	class="actions.CreateTeacher">
+    	</action>
+	</controller>    
+    -->
+    
+    <controller name="RendicontoStagione">
+		<extends controller="Typical"/>
+		<action name="CalcolaTotali" 
+			icon="calculator" mode="detail" 
+            class="actions.CalcolaTotali" />
+	</controller>
+	
+	<controller name="Dashboard">
+		<action name="initDashboard" 
+		class="actions.InitDashboardAction" 
+		before-each-request="true" 
+		hidden="true"/>
+	</controller>
+	
+	<controller name="Tesseramento">
+		<extends controller="Typical"/>
+	    <action name="duplicate" mode="detail" 
+            icon="content-copy"
+            image="copy.gif"
+            available-on-new="false"
+            class="actions.DuplicateAction" />
+	</controller>
+    
+</controllers>
