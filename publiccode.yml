@@ -1,0 +1,132 @@
+# This repository adheres to the publiccode.yml standard by including this 
+# metadata file that makes public software easily discoverable.
+# More info at https://github.com/italia/publiccode.yml
+
+publiccodeYmlVersion: '0.2'
+categories:
+  - data-collection
+  - data-visualization
+dependsOn:
+  open:
+    - name: tomcat
+      optional: false
+      version: ''
+      versionMax: ''
+      versionMin: '7'
+    - name: postgresql
+      optional: false
+      version: ''
+      versionMax: ''
+      versionMin: ''
+description:
+  it:
+    features:
+      - inserimento/importazione untenti e servizi/struttura PA
+      - inserimento e esportazione di acquisti di beni e servizi
+      - profilazione utenti e relativi permessi
+      - definizione cronoprogramma di apertura e chiusura programmazione
+      - pubblicazione programma tramite web services
+      - definizione gruppo di lavoro relativo ad un acquisto di beni e servizi
+    genericName: Programma Biennale
+    longDescription: |
+      Il sistema di raccolta degli interventi da realizzare tramite contratti
+      pubblici di beni e servizi consente di redigere compiutamente il
+      “Programma Biennale degli acquisti di beni e servizi” ai sensi dell’art.
+      21 del D.Lgs. n50/2016 e del “Regolamento recante procedure e schemi-tipo
+      per la redazione e la pubblicazione del programma triennale dei lavori
+      pubblici, del programma biennale per l'acquisizione di forniture e servizi
+      e dei relativi elenchi annuali e aggiornamenti annuali” adottato con
+      decreto n°14 del 16 gennaio 2018 dal Ministro delle Infrastrutture e dei
+      trasporti di concerto con il Ministro dell’economia e delle finanze (nel
+      seguito DM 14/2018).
+
+
+      In particolare, il sistema consente ai RUP ex art. 31 del D.Lgs.
+      n.50/2016, immediatamente dopo l’approvazione del bilancio triennale di
+      previsione, di:
+
+
+      1. Inserire in apposite “schede intervento”, strutturate in analogia ai
+      Prospetti Economici proposti da ITACA, i valori qualificativi e
+      quantificativi essenziali di tutti i progetti che si intendono realizzare
+      nel biennio, indipendentemente dal loro valore, in coerenza a quanto
+      approvato dalla Giunta Regionale nel Bilancio Finanziario gestionale
+      (BFG);
+
+      2. Aggiornare motivatamente l’ultimo programma approvato ovvero:
+          1. confermare gli interventi già avviati, inserendo i riferimenti al codice gara assegnato dal sistema GT-SUAM e la data di avvio della relativa procedura di affidamento;
+          2. eliminare gli eventuali interventi che non si intendono riproporre indicandone una breve motivazione, secondo quanto previsto dalla tabella C del DM 14/2018;
+          3. confermare o modificare i valori degli eventuali previsti per l’anno corrente;
+
+      In base ai valori inseriti dai RUP, il Responsabile Regionale del
+      Programma potrà:
+
+
+      1. identificare eventuali interventi accorpabili in un'unica procedura di
+      affidamento;
+
+      2. redigere e pubblicare il programma biennale secondo la normativa
+      vigente.
+
+
+      Successivamente alla pubblicazione, il sistema consentirà di consultare il
+      programma approvato e le strutture delegate a svolgere le procedure di
+      affidamento (SUAM, Provveditorato, Informatica o struttura committente)
+      potranno programmare le rispettive attività annuali, in base ai carichi di
+      lavoro previsti ed alle priorità che ciascun RUP avrà indicato nelle
+      relative schede di intervento.
+    shortDescription: |-
+      Il sistema di raccolta degli interventi da realizzare tramite contratti
+      pubblici di beni e servizi consente di redigere il relativo Programma
+developmentStatus: obsolete
+inputTypes:
+  - text/csv
+  - application/vnd.ms-excel
+  - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+intendedAudience:
+  countries:
+    - it
+  scope:
+    - local-authorities
+it:
+  conforme:
+    gdpr: true
+    lineeGuidaDesign: true
+    misureMinimeSicurezza: true
+    modelloInteroperabilita: true
+  countryExtensionVersion: '0.2'
+  piattaforme:
+    anpr: false
+    cie: true
+    pagopa: false
+    spid: true
+  riuso:
+    codiceIPA: r_marche
+legal:
+  license: LGPL-2.1-or-later
+  mainCopyrightOwner: Regione Marche
+  repoOwner: Regione Marche
+localisation:
+  availableLanguages:
+    - it
+  localisationReady: true
+maintenance:
+  contacts:
+    - email: marco.aureli@regione.marche.it
+      name: Marco Aureli
+      phone: '+393469593378'
+  type: internal
+name: prog-servizi
+outputTypes:
+  - text/csv
+  - application/vnd.ms-excel
+  - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  - application/pdf
+  - application/json
+platforms:
+  - web
+releaseDate: '2021-11-05'
+softwareType: standalone/web
+url: 'https://github.com/regione-marche/prog-servizi'
+usedBy:
+  - Regione Marche
